@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Member extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = [
+        'first_name',
+        'last_name',
+        'phone',
+        'email',
+        'gender',
+        'date_of_birth',
+        'status',
+        'profile_photo',
+        'address',
+    ];
+
+    protected $casts = [
+        'date_of_birth' => 'date',
+    ];
+
+    public function getFullNameAttribute(): string
+    {
+        return "{$this->first_name} {$this->last_name}";
+    }
+
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class);
+    }
+
+    public function departments(): BelongsToMany
+    {
+        return $this->belongsToMany(Department::class, 'department_member')
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
+    public function ministries(): BelongsToMany
+    {
+        return $this->belongsToMany(Ministry::class, 'ministry_member')
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
+    public function leadershipRoles(): BelongsToMany
+    {
+        return $this->belongsToMany(LeadershipRole::class, 'member_leadership')
+                    ->withPivot('assigned_at')
+                    ->withTimestamps();
+    }
+
+    public function submittedReports(): HasMany
+    {
+        return $this->hasMany(Report::class, 'submitted_by');
+    }
+
+    public function reviewedReports(): HasMany
+    {
+        return $this->hasMany(Report::class, 'reviewed_by');
+    }
+
+    public function financeTransactions(): HasMany
+    {
+        return $this->hasMany(FinanceTransaction::class, 'recorded_by');
+    }
+}
