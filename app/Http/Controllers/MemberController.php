@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CountryCode;
+use App\Models\Branch;
 use App\Models\Member;
 use App\Models\LeadershipRole;
 use Illuminate\Http\RedirectResponse;
@@ -51,8 +52,9 @@ class MemberController extends Controller
         }
 
         $countryCodes = CountryCode::where('is_active', true)->orderBy('country_name')->get();
+        $branches = Branch::with('parentBranch')->orderBy('name')->get();
 
-        return view('members.create', compact('countryCodes'));
+        return view('members.create', compact('countryCodes', 'branches'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -60,6 +62,7 @@ class MemberController extends Controller
         $validated = $request->validate([
             'first_name'    => 'required|string|max:255',
             'last_name'     => 'required|string|max:255',
+            'branch_id'     => auth()->user()?->isPastor() ? 'nullable|exists:branches,id' : 'required|exists:branches,id',
             'country_code_id' => 'nullable|exists:country_codes,id',
             'phone'         => 'nullable|string|max:20',
             'email'         => 'nullable|email|unique:members,email',
@@ -106,8 +109,9 @@ class MemberController extends Controller
         $member->load('leadershipRoles');
         $countryCodes = CountryCode::where('is_active', true)->orderBy('country_name')->get();
         $leadershipRoles = LeadershipRole::orderBy('rank')->get();
+        $branches = Branch::with('parentBranch')->orderBy('name')->get();
 
-        return view('members.edit', compact('member', 'countryCodes', 'leadershipRoles'));
+        return view('members.edit', compact('member', 'countryCodes', 'leadershipRoles', 'branches'));
     }
 
     public function update(Request $request, Member $member): RedirectResponse
@@ -119,6 +123,7 @@ class MemberController extends Controller
         $validated = $request->validate([
             'first_name'    => 'required|string|max:255',
             'last_name'     => 'required|string|max:255',
+            'branch_id'     => auth()->user()?->isPastor() ? 'nullable|exists:branches,id' : 'required|exists:branches,id',
             'country_code_id' => 'nullable|exists:country_codes,id',
             'phone'         => 'nullable|string|max:20',
             'email'         => 'nullable|email|unique:members,email,' . $member->id,

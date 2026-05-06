@@ -22,6 +22,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">{{ $branch->name }}</h2>
+                    <p class="text-xs text-indigo-600 mt-0.5">Alias: {{ $branch->alias }}</p>
                     @if($branch->city)
                         <p class="text-sm text-gray-500 mt-0.5"><i class="fa-solid fa-location-dot mr-1"></i>{{ $branch->city }}</p>
                     @endif
@@ -34,6 +35,10 @@
 
             @if($branch->pastor)
                 <p class="mt-3 text-sm text-gray-600"><i class="fa-solid fa-user-tie mr-1 text-gray-400"></i>Pastor: {{ $branch->pastor->full_name }}</p>
+                <p class="mt-1 text-xs text-gray-500"><i class="fa-solid fa-phone mr-1 text-gray-400"></i>{{ $branch->pastor->display_phone ?? 'No contact' }}</p>
+                <p class="mt-0.5 text-xs text-gray-500"><i class="fa-solid fa-envelope mr-1 text-gray-400"></i>{{ $branch->pastor->email ?? 'No email' }}</p>
+            @else
+                <p class="mt-3 text-sm text-gray-400"><i class="fa-solid fa-user-tie mr-1"></i>No branch pastor assigned.</p>
             @endif
 
             @if($branch->description)

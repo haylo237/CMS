@@ -76,10 +76,15 @@ class DepartmentController extends Controller
         $validated = $request->validate([
             'member_id' => 'required|exists:members,id',
             'role' => 'required|in:head,assistant,member',
+            'custom_role_title' => 'nullable|string|max:120',
         ]);
 
         $department->members()->syncWithoutDetaching([
-            $validated['member_id'] => ['role' => $validated['role']],
+            $validated['member_id'] => [
+                'role' => $validated['role'],
+                'custom_role_title' => trim((string) ($validated['custom_role_title'] ?? '')) ?: null,
+                'leadership_role_id' => null,
+            ],
         ]);
 
         return back()->with('success', 'Department member updated.');

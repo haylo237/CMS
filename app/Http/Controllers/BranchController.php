@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\CountryCode;
+use App\Models\Department;
 use App\Models\Division;
 use App\Models\Member;
+use App\Models\Ministry;
 use App\Models\Region;
 use App\Models\Subdivision;
 use Illuminate\Http\Request;
@@ -19,7 +21,7 @@ class BranchController extends Controller
         $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
 
         $branches = Branch::withCount('members')
-                          ->with(['pastor', 'parentBranch', 'countryCode'])
+                          ->with(['pastor.countryCode', 'parentBranch', 'countryCode'])
                           ->when($branchId, fn($q) => $q->where('id', $branchId))
                           ->latest()
                           ->paginate(12);
@@ -68,9 +70,16 @@ class BranchController extends Controller
 
         // First branch becomes HQ (no parent); all subsequent branches default to HQ
         $hq = Branch::whereNull('parent_branch_id')->oldest()->first();
+        $isFirstBranch = !$hq;
         $data['parent_branch_id'] = $hq ? $hq->id : null;
 
-        Branch::create($data);
+        $createdBranch = Branch::create($data);
+
+        // If this is the first branch, attach any legacy members without branch to HQ.
+        if ($isFirstBranch) {
+            Member::whereNull('branch_id')->update(['branch_id' => $createdBranch->id]);
+        }
+
         return redirect()->route('branches.index')->with('success', 'Branch created successfully.');
     }
 
@@ -80,8 +89,40 @@ class BranchController extends Controller
             abort(403);
         }
 
-        $branch->load(['countryCode', 'regionRef', 'divisionRef', 'subdivisionRef', 'pastor', 'parentBranch', 'subBranches', 'members', 'events' => fn($q) => $q->latest('date')->limit(5)]);
-        return view('branches.show', compact('branch'));
+        $branch->load([
+            'countryCode',
+            'regionRef',
+            'divisionRef',
+            'subdivisionRef',
+            'pastor.countryCode',
+            'pastor.leadershipRoles',
+            'parentBranch',
+            'subBranches',
+            'members.countryCode',
+            'members.leadershipRoles',
+            'members.departments',
+            'members.ministries',
+            'events' => fn($q) => $q->latest('date')->limit(5),
+        ]);
+
+        $branchMembers = $branch->members;
+        $branchMemberIds = $branchMembers->pluck('id');
+
+        $branchLeadershipMembers = $branchMembers
+            ->filter(fn($member) => $member->leadershipRoles->isNotEmpty())
+            ->values();
+
+        $departments = Department::whereHas('members', fn($q) => $q->whereIn('members.id', $branchMemberIds))
+            ->with(['members' => fn($q) => $q->whereIn('members.id', $branchMemberIds)->orderBy('first_name')])
+            ->orderBy('name')
+            ->get();
+
+        $ministries = Ministry::whereHas('members', fn($q) => $q->whereIn('members.id', $branchMemberIds))
+            ->with(['members' => fn($q) => $q->whereIn('members.id', $branchMemberIds)->orderBy('first_name')])
+            ->orderBy('name')
+            ->get();
+
+        return view('branches.show', compact('branch', 'branchLeadershipMembers', 'departments', 'ministries'));
     }
 
     public function edit(Branch $branch): View

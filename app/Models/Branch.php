@@ -32,6 +32,11 @@ class Branch extends Model
         return PhoneNumber::display($this->phone, $this->countryCode?->dial_code);
     }
 
+    public function getAliasAttribute(): string
+    {
+        return $this->parent_branch_id ? $this->name : 'HQ';
+    }
+
     public function pastor(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'pastor_id');

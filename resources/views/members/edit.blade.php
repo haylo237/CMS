@@ -13,6 +13,21 @@
             @csrf @method('PUT')
 
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Branch <span class="text-red-500">*</span></label>
+                @if(auth()->user()?->isPastor())
+                    <input type="text" value="{{ auth()->user()->pastoredBranch()?->name }}" disabled class="w-full border rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-600">
+                    <input type="hidden" name="branch_id" value="{{ auth()->user()->pastoredBranchId() }}">
+                @else
+                    <select name="branch_id" required class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 @error('branch_id') border-red-400 @enderror">
+                        <option value="">Select branch</option>
+                        @foreach($branches as $branchOption)
+                            <option value="{{ $branchOption->id }}" @selected((string) old('branch_id', $member->branch_id) === (string) $branchOption->id)>{{ $branchOption->name }} @if($branchOption->parentBranch)({{ $branchOption->parentBranch->name }})@endif</option>
+                        @endforeach
+                    </select>
+                @endif
+            </div>
+
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Profile Photo</label>
                 <div class="flex items-center gap-4">
                     @if($member->profile_photo_url)

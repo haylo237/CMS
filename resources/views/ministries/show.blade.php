@@ -15,15 +15,25 @@
         <div class="flex items-center justify-between mb-4 gap-3">
             <h3 class="text-sm font-semibold text-gray-500 uppercase">Members ({{ $ministry->members->count() }})</h3>
             @can('manage-ministries')
-                <button type="button" onclick="document.getElementById('addMinistryMemberModal').classList.remove('hidden')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg transition">
-                    Add Member
-                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="openMinistryModal('member')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg transition">
+                        Add Member
+                    </button>
+                    <button type="button" onclick="openMinistryModal('leader')" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg transition">
+                        Add Leader
+                    </button>
+                </div>
             @endcan
         </div>
         @forelse($ministry->members as $member)
             <div class="flex items-center justify-between py-2 border-b last:border-0 text-sm">
                 <a href="{{ route('members.show', $member) }}" class="font-medium text-indigo-600 hover:underline">{{ $member->full_name }}</a>
-                <span class="capitalize text-gray-400 text-xs">{{ $member->pivot->role }}</span>
+                <div class="text-right">
+                    <span class="capitalize text-gray-400 text-xs">{{ $member->pivot->role }}</span>
+                    @if($member->pivot->custom_role_title)
+                        <p class="text-[11px] text-amber-600">{{ $member->pivot->custom_role_title }}</p>
+                    @endif
+                </div>
             </div>
         @empty
             <p class="text-sm text-gray-400">No members assigned.</p>
@@ -31,6 +41,33 @@
     </div>
 
     <div class="bg-white rounded-xl border shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4 gap-3">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase">Leaders</h3>
+            @can('manage-ministries')
+                <button type="button" onclick="openMinistryModal('leader')" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg transition">
+                    Add Leader
+                </button>
+            @endcan
+        </div>
+        @php
+            $leaders = $ministry->members->filter(fn($m) => in_array($m->pivot->role, ['leader', 'assistant'], true));
+        @endphp
+        @forelse($leaders as $leader)
+            <div class="flex items-center justify-between py-2 border-b last:border-0 text-sm">
+                <a href="{{ route('members.show', $leader) }}" class="font-medium text-indigo-600 hover:underline">{{ $leader->full_name }}</a>
+                <div class="text-right">
+                    <span class="capitalize text-gray-400 text-xs">{{ $leader->pivot->role }}</span>
+                    @if($leader->pivot->custom_role_title)
+                        <p class="text-[11px] text-amber-600">{{ $leader->pivot->custom_role_title }}</p>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <p class="text-sm text-gray-400">No leaders assigned yet.</p>
+        @endforelse
+    </div>
+
+    <div class="bg-white rounded-xl border shadow-sm p-6 lg:col-span-2">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-semibold text-gray-500 uppercase">Recent Reports</h3>
             <a href="{{ route('reports.index', ['ministry_id' => $ministry->id]) }}" class="text-xs text-indigo-600 hover:underline">View all</a>
@@ -88,11 +125,30 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                    <select name="role" class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    <select name="role" id="ministryRoleSelect" class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
                         <option value="member">Member</option>
                         <option value="assistant">Assistant</option>
                         <option value="leader">Leader</option>
                     </select>
+                </div>
+
+                <div class="border rounded-lg p-3 bg-amber-50/40">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-xs text-gray-600">Optional local ministry title for this member.</p>
+                        <button type="button" id="toggleMinistryCustomRole" class="text-xs text-indigo-600 hover:underline">Create Custom Title</button>
+                    </div>
+
+                    <div id="ministryCustomRoleWrap" class="hidden mt-3">
+                        <label for="customMinistryRoleTitle" class="block text-sm font-medium text-gray-700 mb-1">Custom Ministry Title</label>
+                        <input
+                            id="customMinistryRoleTitle"
+                            type="text"
+                            name="custom_role_title"
+                            maxlength="120"
+                            placeholder="e.g. Choir Flow Coordinator"
+                            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        >
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-1">
@@ -110,7 +166,41 @@
 
         const searchInput = document.getElementById('ministryMemberSearchInput');
         const selectedMemberId = document.getElementById('selectedMinistryMemberId');
+        const roleSelect = document.getElementById('ministryRoleSelect');
+        const toggleCustomRoleBtn = document.getElementById('toggleMinistryCustomRole');
+        const customRoleWrap = document.getElementById('ministryCustomRoleWrap');
+        const customRoleInput = document.getElementById('customMinistryRoleTitle');
         const options = Array.from(modal.querySelectorAll('.ministry-member-option'));
+
+        window.openMinistryModal = function(defaultRole = 'member') {
+            modal.classList.remove('hidden');
+            if (roleSelect) {
+                roleSelect.value = defaultRole;
+            }
+            if (customRoleInput) {
+                customRoleInput.value = '';
+            }
+            if (customRoleWrap) {
+                customRoleWrap.classList.add('hidden');
+            }
+            if (toggleCustomRoleBtn) {
+                toggleCustomRoleBtn.textContent = 'Create Custom Title';
+            }
+        };
+
+        toggleCustomRoleBtn?.addEventListener('click', () => {
+            if (!customRoleWrap) return;
+
+            customRoleWrap.classList.toggle('hidden');
+            const isVisible = !customRoleWrap.classList.contains('hidden');
+            toggleCustomRoleBtn.textContent = isVisible ? 'Hide Custom Title' : 'Create Custom Title';
+
+            if (isVisible) {
+                customRoleInput?.focus();
+            } else if (customRoleInput) {
+                customRoleInput.value = '';
+            }
+        });
 
         function applySearchFilter() {
             const query = (searchInput?.value || '').trim().toLowerCase();

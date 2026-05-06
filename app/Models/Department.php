@@ -16,7 +16,7 @@ class Department extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(Member::class, 'department_member')
-                    ->withPivot('role')
+                    ->withPivot('role', 'custom_role_title', 'leadership_role_id')
                     ->withTimestamps();
     }
 
