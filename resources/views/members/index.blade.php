@@ -56,9 +56,9 @@
         </thead>
         <tbody class="divide-y">
             @forelse($members as $member)
-                <tr class="hover:bg-gray-50">
+                <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ route('members.show', $member) }}'">
                     <td class="px-5 py-3 font-medium">
-                        <a href="{{ route('members.show', $member) }}" class="text-indigo-600 hover:underline inline-flex items-center gap-2">
+                        <a href="{{ route('members.show', $member) }}" onclick="event.stopPropagation()" class="text-indigo-600 hover:underline inline-flex items-center gap-2">
                             @if($member->profile_photo_url)
                                 <img src="{{ $member->profile_photo_url }}" alt="{{ $member->full_name }}" class="w-8 h-8 rounded-full object-cover border">
                             @else
@@ -79,14 +79,14 @@
                         </span>
                     </td>
                     <td class="px-5 py-3 flex items-center gap-2">
-                        <a href="{{ route('members.show', $member) }}" class="text-gray-400 hover:text-indigo-600 transition" title="View">
+                        <a href="{{ route('members.show', $member) }}" onclick="event.stopPropagation()" class="text-gray-400 hover:text-indigo-600 transition" title="View">
                             <i class="fa-solid fa-eye"></i>
                         </a>
                         @can('manage-members')
-                            <a href="{{ route('members.edit', $member) }}" class="text-gray-400 hover:text-amber-500 transition" title="Edit">
+                            <a href="{{ route('members.edit', $member) }}" onclick="event.stopPropagation()" class="text-gray-400 hover:text-amber-500 transition" title="Edit">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </a>
-                            <form method="POST" action="{{ route('members.destroy', $member) }}" onsubmit="return confirm('Delete this member?')">
+                            <form method="POST" action="{{ route('members.destroy', $member) }}" onsubmit="event.stopPropagation(); return confirm('Delete this member?')">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="text-gray-400 hover:text-red-500 transition" title="Delete">
                                     <i class="fa-solid fa-trash"></i>
