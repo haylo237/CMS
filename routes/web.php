@@ -11,6 +11,7 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MinistryController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -68,5 +69,17 @@ Route::middleware(['auth'])->group(function () {
     // Users (admin only)
     Route::middleware(['can:manage-users'])->group(function () {
         Route::resource('users', UserController::class);
+    });
+
+    // Settings (admin only)
+    Route::middleware(['can:manage-settings'])->group(function () {
+        Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::post('settings/general', [SettingController::class, 'updateGeneral'])->name('settings.general');
+        Route::post('settings/branding', [SettingController::class, 'updateBranding'])->name('settings.branding');
+        Route::post('settings/finance', [SettingController::class, 'updateFinance'])->name('settings.finance');
+        Route::post('settings/notifications', [SettingController::class, 'updateNotifications'])->name('settings.notifications');
+        Route::post('settings/templates', [SettingController::class, 'storeTemplate'])->name('settings.templates.store');
+        Route::delete('settings/templates/{template}', [SettingController::class, 'destroyTemplate'])->name('settings.templates.destroy');
+        Route::patch('settings/templates/{template}/default', [SettingController::class, 'setDefaultTemplate'])->name('settings.templates.default');
     });
 });

@@ -19,6 +19,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // Admin-level gates
         Gate::define('manage-users', fn($user) => $user->isAdmin());
+        Gate::define('manage-settings', fn($user) => $user->isAdmin());
         Gate::define('view-finance', fn($user) => $user->hasRole(['super_admin', 'admin', 'pastor', 'finance_officer']));
         Gate::define('manage-finance', fn($user) => $user->hasRole(['super_admin', 'admin', 'finance_officer']));
         Gate::define('manage-members', fn($user) => $user->hasRole(['super_admin', 'admin']));

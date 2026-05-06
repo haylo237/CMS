@@ -51,6 +51,15 @@
                 </a>
             @endcan
 
+            @can('manage-settings')
+                <a href="{{ route('settings.index') }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition
+                          {{ request()->routeIs('settings*') ? 'bg-indigo-700 text-white' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white' }}">
+                    <i class="fa-solid fa-gear w-5 text-center"></i>
+                    Settings
+                </a>
+            @endcan
+
             @auth
                 @php
                     $msgMemberId    = auth()->user()->member_id;
