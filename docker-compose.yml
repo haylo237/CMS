@@ -1,0 +1,139 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: church-cms-app:local
+    container_name: church_cms_app
+    restart: unless-stopped
+    working_dir: /var/www
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: church_cms
+      DB_USERNAME: church
+      DB_PASSWORD: church
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SESSION_DRIVER: database
+      RUN_MIGRATIONS: "true"
+    volumes:
+      - ./:/var/www
+      - cms_vendor:/var/www/vendor
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: church_cms_web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+
+  worker:
+    image: church-cms-app:local
+    container_name: church_cms_worker
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan queue:work --verbose --tries=3 --timeout=90
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: church_cms
+      DB_USERNAME: church
+      DB_PASSWORD: church
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SESSION_DRIVER: database
+      RUN_MIGRATIONS: "false"
+    volumes:
+      - ./:/var/www
+      - cms_vendor:/var/www/vendor
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  scheduler:
+    image: church-cms-app:local
+    container_name: church_cms_scheduler
+    restart: unless-stopped
+    working_dir: /var/www
+    command: /bin/sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: church_cms
+      DB_USERNAME: church
+      DB_PASSWORD: church
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SESSION_DRIVER: database
+      RUN_MIGRATIONS: "false"
+    volumes:
+      - ./:/var/www
+      - cms_vendor:/var/www/vendor
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: church_cms_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: church_cms
+      POSTGRES_USER: church
+      POSTGRES_PASSWORD: church
+    ports:
+      - "5432:5432"
+    volumes:
+      - cms_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U church -d church_cms"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: church_cms_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - cms_redis_data:/data
+
+volumes:
+  cms_postgres_data:
+  cms_redis_data:
+  cms_vendor:
