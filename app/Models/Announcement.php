@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Announcement extends Model
 {
@@ -42,6 +43,12 @@ class Announcement extends Model
     }
 
     public function scopeActive($query)
+        public function sendLogs(): HasMany
+        {
+            return $this->hasMany(WhatsAppSendLog::class);
+        }
+
+        public function scopeActive($query)
     {
         return $query->where(function ($q) {
             $q->whereNull('expires_at')->orWhere('expires_at', '>', now());

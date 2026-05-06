@@ -91,6 +91,29 @@ class SettingController extends Controller
         return back()->with('success', 'Notification settings saved.')->with('tab', 'notifications');
     }
 
+    // ─── WhatsApp ─────────────────────────────────────────────────────
+
+    public function updateWhatsApp(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'whatsapp_enabled'         => 'nullable|in:0,1',
+            'whatsapp_phone_number_id' => 'nullable|string|max:100',
+            'whatsapp_access_token'    => 'nullable|string|max:500',
+            'whatsapp_country_code'    => 'nullable|string|max:10',
+        ]);
+
+        Setting::set('whatsapp_enabled',         $data['whatsapp_enabled'] ?? '0');
+        Setting::set('whatsapp_phone_number_id', $data['whatsapp_phone_number_id'] ?? '');
+        Setting::set('whatsapp_country_code',    $data['whatsapp_country_code'] ?? '234');
+
+        // Only overwrite access token if a new value was provided
+        if (!empty($data['whatsapp_access_token'])) {
+            Setting::set('whatsapp_access_token', $data['whatsapp_access_token']);
+        }
+
+        return back()->with('success', 'WhatsApp settings saved.')->with('tab', 'whatsapp');
+    }
+
     // ─── Document Templates ───────────────────────────────────────────
 
     public function storeTemplate(Request $request): RedirectResponse

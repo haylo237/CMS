@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendWhatsAppAnnouncement;
 use App\Models\Announcement;
 use App\Models\Branch;
 use App\Models\Department;
+use App\Models\Member;
 use App\Models\Ministry;
+use App\Models\WhatsAppSendLog;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class AnnouncementController extends Controller
@@ -53,7 +58,11 @@ class AnnouncementController extends Controller
     public function show(Announcement $announcement): View
     {
         $announcement->load(['publishedBy', 'branch', 'department', 'ministry']);
-        return view('announcements.show', compact('announcement'));
+        $sendLogs    = $announcement->sendLogs()->latest()->get();
+        $branches    = Branch::all();
+        $departments = Department::all();
+        $ministries  = Ministry::all();
+        return view('announcements.show', compact('announcement', 'sendLogs', 'branches', 'departments', 'ministries'));
     }
 
     public function edit(Announcement $announcement): View
@@ -85,5 +94,60 @@ class AnnouncementController extends Controller
     {
         $announcement->delete();
         return redirect()->route('announcements.index')->with('success', 'Announcement deleted.');
+    }
+
+    /**
+     * Dispatch a WhatsApp broadcast for this announcement.
+     * Only accessible to users with the 'send-whatsapp' gate.
+     */
+    public function sendWhatsApp(Request $request, Announcement $announcement, WhatsAppService $whatsApp): RedirectResponse
+    {
+        abort_unless(Gate::allows('send-whatsapp'), 403);
+
+        if (!$whatsApp->isConfigured()) {
+            return back()->with('error', 'WhatsApp is not configured. Please update the WhatsApp settings first.');
+        }
+
+        $data = $request->validate([
+            'audience_type' => 'required|in:all,branch,department,ministry',
+            'audience_id'   => 'nullable|integer',
+        ]);
+
+        // Build recipient list
+        $query = Member::whereNotNull('phone')
+            ->where('phone', '!=', '')
+            ->where('status', 'active');
+
+        $audienceType = $data['audience_type'];
+        $audienceId   = $data['audience_id'] ?? null;
+
+        match ($audienceType) {
+            'branch'     => $query->where('branch_id', $audienceId),
+            'department' => $query->whereHas('departments', fn($q) => $q->where('departments.id', $audienceId)),
+            'ministry'   => $query->whereHas('ministries',  fn($q) => $q->where('ministries.id', $audienceId)),
+            default      => null,
+        };
+
+        $memberIds = $query->pluck('id')->toArray();
+        $total     = count($memberIds);
+
+        if ($total === 0) {
+            return back()->with('error', 'No members with phone numbers found for the selected audience.');
+        }
+
+        $message = "*{$announcement->title}*\n\n{$announcement->body}";
+
+        $log = WhatsAppSendLog::create([
+            'announcement_id'  => $announcement->id,
+            'sent_by'          => auth()->user()->member_id,
+            'audience_type'    => $audienceType,
+            'audience_id'      => $audienceId,
+            'total_recipients' => $total,
+            'status'           => 'pending',
+        ]);
+
+        dispatch(new SendWhatsAppAnnouncement($log->id, $message, $memberIds));
+
+        return back()->with('success', "WhatsApp broadcast queued for {$total} member(s). You can track progress in the send log.");
     }
 }

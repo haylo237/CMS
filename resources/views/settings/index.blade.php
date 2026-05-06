@@ -33,6 +33,7 @@
             'finance'       => ['icon' => 'fa-coins',           'label' => 'Finance'],
             'notifications' => ['icon' => 'fa-bell',            'label' => 'Notifications'],
             'templates'     => ['icon' => 'fa-file-lines',      'label' => 'Document Templates'],
+            'whatsapp'      => ['icon' => 'fa-brands fa-whatsapp', 'label' => 'WhatsApp'],
         ];
     @endphp
     @foreach($tabs as $key => $tab)
@@ -346,6 +347,60 @@
     @endif
 </div>
 
+{{-- ═══════════════════════ WHATSAPP ═══════════════════════ --}}
+<div id="tab-whatsapp" class="tab-panel {{ $activeTab !== 'whatsapp' ? 'hidden' : '' }}">
+    <form method="POST" action="{{ route('settings.whatsapp') }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        @csrf
+        <h2 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <i class="fa-brands fa-whatsapp text-green-500 text-lg"></i> WhatsApp Business Cloud API
+        </h2>
+        <p class="text-sm text-gray-500 mb-5">
+            Configure the Meta WhatsApp Business Cloud API to enable broadcast messages to members.
+            <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" class="text-indigo-600 hover:underline">Setup guide &rarr;</a>
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="sm:col-span-2">
+                <label class="flex items-center gap-2 cursor-pointer w-fit">
+                    <span class="relative inline-flex h-6 w-11 items-center rounded-full transition
+                        {{ $s('whatsapp_enabled','0') == '1' ? 'bg-green-500' : 'bg-gray-200' }}" id="waToggleBg">
+                        <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition
+                            {{ $s('whatsapp_enabled','0') == '1' ? 'translate-x-6' : 'translate-x-1' }}" id="waToggleKnob"></span>
+                    </span>
+                    <span class="text-sm font-medium text-gray-700">Enable WhatsApp Broadcasting</span>
+                    <input type="hidden" name="whatsapp_enabled" id="waEnabledHidden" value="{{ $s('whatsapp_enabled','0') }}">
+                </label>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number ID</label>
+                <input type="text" name="whatsapp_phone_number_id" value="{{ $s('whatsapp_phone_number_id') }}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"
+                    placeholder="e.g. 123456789012345">
+                <p class="text-xs text-gray-400 mt-1">Found in Meta Business → WhatsApp → API Setup</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Default Country Code</label>
+                <input type="text" name="whatsapp_country_code" value="{{ $s('whatsapp_country_code','234') }}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"
+                    placeholder="234">
+                <p class="text-xs text-gray-400 mt-1">Digits only, no +. Used to prefix local numbers.</p>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Permanent Access Token</label>
+                <input type="password" name="whatsapp_access_token" value="{{ $s('whatsapp_access_token') }}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"
+                    placeholder="EAAxxxxxxxxxxxxxxxx"
+                    autocomplete="off">
+                <p class="text-xs text-gray-400 mt-1">Use a System User token with <code>whatsapp_business_messaging</code> permission.</p>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2 rounded-lg">
+                Save WhatsApp Settings
+            </button>
+        </div>
+    </form>
+</div>
+
 {{-- Tab switching script --}}
 <script>
 function switchTab(tab) {
@@ -383,5 +438,19 @@ document.querySelectorAll('input[type=color]').forEach(picker => {
     const text = document.getElementById(textId);
     if (text) picker.addEventListener('input', () => text.value = picker.value);
 });
+// WhatsApp toggle
+const waToggleBg    = document.getElementById('waToggleBg');
+const waToggleKnob  = document.getElementById('waToggleKnob');
+const waHidden      = document.getElementById('waEnabledHidden');
+if (waToggleBg) {
+    waToggleBg.addEventListener('click', () => {
+        const on = waHidden.value === '1';
+        waHidden.value = on ? '0' : '1';
+        waToggleBg.classList.toggle('bg-green-500', !on);
+        waToggleBg.classList.toggle('bg-gray-200', on);
+        waToggleKnob.classList.toggle('translate-x-6', !on);
+        waToggleKnob.classList.toggle('translate-x-1', on);
+    });
+}
 </script>
 @endsection
