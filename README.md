@@ -24,16 +24,27 @@ This starts:
 - `worker` (queue worker)
 - `scheduler` (Laravel scheduler loop)
 
+Why both `app` and `worker`:
+
+- `app` serves HTTP requests through PHP-FPM (web traffic).
+- `worker` processes background jobs from queues (emails, async tasks).
+- `scheduler` runs Laravel scheduled tasks every minute.
+
+Dependency install note:
+
+- Only the `app` service runs `composer install`.
+- `worker` and `scheduler` wait for dependencies to be ready before starting.
+
 Host ports are configurable to avoid collisions:
 
-- `WEB_PORT` default: `8088`
-- `POSTGRES_PORT` default: `5433`
-- `REDIS_PORT` default: `6380`
+- `CMS_WEB_PORT` default: `8088`
+- `CMS_POSTGRES_PORT` default: `5433`
+- `CMS_REDIS_PORT` default: `6380`
 
 Example:
 
 ```bash
-WEB_PORT=8095 POSTGRES_PORT=5540 REDIS_PORT=6395 docker compose up --build -d
+CMS_WEB_PORT=8095 CMS_POSTGRES_PORT=5540 CMS_REDIS_PORT=6395 docker compose up --build -d
 ```
 
 ### 2) Seed initial data
@@ -49,7 +60,7 @@ Default admin credentials:
 
 ### 3) Access app
 
-Open `http://localhost:8088` (or your custom `WEB_PORT`).
+Open `http://localhost:8088` (or your custom `CMS_WEB_PORT`).
 
 ## Useful Docker Commands
 

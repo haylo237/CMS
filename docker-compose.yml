@@ -10,7 +10,7 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_URL: http://localhost:${WEB_PORT:-8088}
+      APP_URL: http://localhost:${CMS_WEB_PORT:-8088}
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
@@ -23,6 +23,7 @@ services:
       REDIS_PORT: 6379
       SESSION_DRIVER: database
       RUN_MIGRATIONS: "true"
+      RUN_COMPOSER_INSTALL: "true"
     volumes:
       - ./:/var/www
       - cms_vendor:/var/www/vendor
@@ -37,10 +38,10 @@ services:
     container_name: church_cms_web
     restart: unless-stopped
     ports:
-      - "${WEB_PORT:-8088}:80"
+      - "${CMS_WEB_PORT:-8088}:80"
     volumes:
       - ./:/var/www
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app
 
@@ -53,7 +54,7 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_URL: http://localhost:${WEB_PORT:-8088}
+      APP_URL: http://localhost:${CMS_WEB_PORT:-8088}
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
@@ -66,6 +67,7 @@ services:
       REDIS_PORT: 6379
       SESSION_DRIVER: database
       RUN_MIGRATIONS: "false"
+      RUN_COMPOSER_INSTALL: "false"
     volumes:
       - ./:/var/www
       - cms_vendor:/var/www/vendor
@@ -84,7 +86,7 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_URL: http://localhost:${WEB_PORT:-8088}
+      APP_URL: http://localhost:${CMS_WEB_PORT:-8088}
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
@@ -97,6 +99,7 @@ services:
       REDIS_PORT: 6379
       SESSION_DRIVER: database
       RUN_MIGRATIONS: "false"
+      RUN_COMPOSER_INSTALL: "false"
     volumes:
       - ./:/var/www
       - cms_vendor:/var/www/vendor
@@ -115,7 +118,7 @@ services:
       POSTGRES_USER: church
       POSTGRES_PASSWORD: church
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      - "${CMS_POSTGRES_PORT:-5433}:5432"
     volumes:
       - cms_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -129,7 +132,7 @@ services:
     container_name: church_cms_redis
     restart: unless-stopped
     ports:
-      - "${REDIS_PORT:-6380}:6379"
+      - "${CMS_REDIS_PORT:-6380}:6379"
     volumes:
       - cms_redis_data:/data
 
