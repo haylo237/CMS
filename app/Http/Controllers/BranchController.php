@@ -33,15 +33,15 @@ class BranchController extends Controller
         }
 
         $members  = Member::orderBy('first_name')->get();
-        $branches = Branch::all();
         $countryCodes = CountryCode::where('is_active', true)->orderBy('country_name')->get();
+        $hq = Branch::whereNull('parent_branch_id')->oldest()->first();
 
         $cameroonCodeId = CountryCode::where('iso_code', 'CM')->value('id');
         $regions = Region::where('country_code_id', $cameroonCodeId)->orderBy('item_number')->get();
         $divisions = Division::whereIn('region_id', $regions->pluck('id'))->orderBy('item_number')->get();
         $subdivisions = Subdivision::whereIn('division_id', $divisions->pluck('id'))->orderBy('item_number')->get();
 
-        return view('branches.create', compact('members', 'branches', 'countryCodes', 'regions', 'divisions', 'subdivisions'));
+        return view('branches.create', compact('members', 'countryCodes', 'hq', 'regions', 'divisions', 'subdivisions'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -61,11 +61,14 @@ class BranchController extends Controller
             'phone'            => 'nullable|string|max:30',
             'email'            => 'nullable|email|max:255',
             'pastor_id'        => 'nullable|exists:members,id',
-            'parent_branch_id' => 'nullable|exists:branches,id',
             'description'      => 'nullable|string',
         ]);
 
         $this->validateAdministrativeHierarchy($data, $request);
+
+        // First branch becomes HQ (no parent); all subsequent branches default to HQ
+        $hq = Branch::whereNull('parent_branch_id')->oldest()->first();
+        $data['parent_branch_id'] = $hq ? $hq->id : null;
 
         Branch::create($data);
         return redirect()->route('branches.index')->with('success', 'Branch created successfully.');

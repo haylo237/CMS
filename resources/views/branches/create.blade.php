@@ -19,87 +19,99 @@
 
     <form method="POST" action="{{ route('branches.store') }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-5">
         @csrf
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="sm:col-span-2">
-                <label id="branchNameLabel" class="block text-sm font-medium text-gray-700 mb-1">Branch Name *</label>
-                <input type="text" name="name" value="{{ old('name') }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                <p id="branchNameHint" class="text-xs text-gray-500 mt-1">Use the official branch name.</p>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
-                <input type="text" name="city" value="{{ old('city') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Country Code</label>
-                <select id="countryCodeSelect" name="country_code_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">Select code</option>
-                    @foreach($countryCodes as $countryCode)
-                        <option value="{{ $countryCode->id }}" data-iso="{{ $countryCode->iso_code }}" @selected((string) old('country_code_id') === (string) $countryCode->id)>
-                            +{{ $countryCode->dial_code }} ({{ $countryCode->country_name }})
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input type="text" name="phone" value="{{ old('phone') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div class="sm:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                <input type="text" name="address" value="{{ old('address') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="email" name="email" value="{{ old('email') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Pastor</label>
-                <select name="pastor_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">— None —</option>
-                    @foreach($members as $member)
-                        <option value="{{ $member->id }}" {{ old('pastor_id') == $member->id ? 'selected' : '' }}>{{ $member->full_name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="sm:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Parent Branch</label>
-                <select id="parentBranchSelect" name="parent_branch_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">— None (top-level) —</option>
-                    @foreach($branches as $b)
-                        <option value="{{ $b->id }}" {{ old('parent_branch_id') == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div id="cameroonFields" class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4 hidden">
+
+        {{-- Branch Info --}}
+        <div>
+            <h2 class="text-sm font-semibold text-indigo-600 uppercase tracking-wide mb-3">Branch Information</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Branch Name * @if($hq) <span class="text-gray-400 font-normal">(parent: {{ $hq->name }})</span>@endif
+                    </label>
+                    <input type="text" name="name" value="{{ old('name') }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    @if(!$hq)
+                        <p class="text-xs text-indigo-600 mt-1">This will be created as the <strong>Headquarters (HQ)</strong> branch.</p>
+                    @endif
+                </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Region</label>
-                    <select id="regionSelect" name="region_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">Select region</option>
-                        @foreach($regions as $region)
-                            <option value="{{ $region->id }}" @selected((string) old('region_id') === (string) $region->id)>
-                                {{ $region->item_number }}. {{ $region->name }}
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pastor</label>
+                    <select name="pastor_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">— None —</option>
+                        @foreach($members as $member)
+                            <option value="{{ $member->id }}" {{ old('pastor_id') == $member->id ? 'selected' : '' }}>{{ $member->full_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" name="email" value="{{ old('email') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('description') }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-gray-100">
+
+        {{-- Address Info --}}
+        <div>
+            <h2 class="text-sm font-semibold text-indigo-600 uppercase tracking-wide mb-3">Address &amp; Contact</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                    <select id="countryCodeSelect" name="country_code_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Select country</option>
+                        @foreach($countryCodes as $countryCode)
+                            <option value="{{ $countryCode->id }}" data-iso="{{ $countryCode->iso_code }}" @selected((string) old('country_code_id') === (string) $countryCode->id)>
+                                {{ $countryCode->country_name }} (+{{ $countryCode->dial_code }})
                             </option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Division</label>
-                    <select id="divisionSelect" name="division_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">Select division</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <input type="text" name="phone" value="{{ old('phone') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Subdivision (Optional)</label>
-                    <select id="subdivisionSelect" name="subdivision_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">Select subdivision</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <input type="text" name="city" value="{{ old('city') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <input type="text" name="address" value="{{ old('address') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
+                {{-- Cameroon-specific administrative fields --}}
+                <div id="cameroonFields" class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4 hidden">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                        <select id="regionSelect" name="region_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select region</option>
+                            @foreach($regions as $region)
+                                <option value="{{ $region->id }}" @selected((string) old('region_id') === (string) $region->id)>
+                                    {{ $region->item_number }}. {{ $region->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Division</label>
+                        <select id="divisionSelect" name="division_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select division</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Subdivision <span class="text-gray-400">(Optional)</span></label>
+                        <select id="subdivisionSelect" name="subdivision_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select subdivision</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-            <div class="sm:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('description') }}</textarea>
-            </div>
         </div>
+
         <div class="flex gap-3 justify-end pt-2">
             <a href="{{ route('branches.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</a>
             <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">Create Branch</button>
@@ -108,18 +120,6 @@
 </div>
 
 <script>
-function updateBranchNameUi() {
-    const parent = document.getElementById('parentBranchSelect');
-    const hasParent = parent && parent.value !== '';
-    const label = document.getElementById('branchNameLabel');
-    const hint = document.getElementById('branchNameHint');
-    if (!label || !hint) return;
-    label.textContent = hasParent ? 'Branch Alias *' : 'Branch Name *';
-    hint.textContent = hasParent
-        ? 'Since parent branch is selected, this acts as the alias/name used for this branch unit.'
-        : 'Use the official branch name.';
-}
-
 function toggleCameroonFields() {
     const select = document.getElementById('countryCodeSelect');
     const panel = document.getElementById('cameroonFields');
@@ -170,14 +170,12 @@ function populateSubdivisions(selectedSubdivisionId = '') {
         });
 }
 
-document.getElementById('parentBranchSelect')?.addEventListener('change', updateBranchNameUi);
 document.getElementById('countryCodeSelect')?.addEventListener('change', toggleCameroonFields);
 document.getElementById('regionSelect')?.addEventListener('change', () => {
     populateDivisions('');
     populateSubdivisions('');
 });
 document.getElementById('divisionSelect')?.addEventListener('change', () => populateSubdivisions(''));
-updateBranchNameUi();
 toggleCameroonFields();
 populateDivisions(@json(old('division_id')));
 populateSubdivisions(@json(old('subdivision_id')));
