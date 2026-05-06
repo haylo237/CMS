@@ -22,6 +22,9 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-3">
         <h2 class="font-semibold text-gray-700 text-sm uppercase tracking-wide">Branch Info</h2>
         @if($branch->city)<p class="text-sm"><span class="text-gray-500">City:</span> {{ $branch->city }}</p>@endif
+        @if($branch->regionRef || $branch->region)<p class="text-sm"><span class="text-gray-500">Region:</span> {{ $branch->regionRef?->name ?? $branch->region }}</p>@endif
+        @if($branch->divisionRef || $branch->division)<p class="text-sm"><span class="text-gray-500">Division:</span> {{ $branch->divisionRef?->name ?? $branch->division }}</p>@endif
+        @if($branch->subdivisionRef || $branch->subdivision)<p class="text-sm"><span class="text-gray-500">Subdivision:</span> {{ $branch->subdivisionRef?->name ?? $branch->subdivision }}</p>@endif
         @if($branch->address)<p class="text-sm"><span class="text-gray-500">Address:</span> {{ $branch->address }}</p>@endif
         @if($branch->display_phone)<p class="text-sm"><span class="text-gray-500">Phone:</span> {{ $branch->display_phone }}</p>@endif
         @if($branch->email)<p class="text-sm"><span class="text-gray-500">Email:</span> {{ $branch->email }}</p>@endif

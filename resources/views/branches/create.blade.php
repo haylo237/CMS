@@ -21,8 +21,9 @@
         @csrf
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="sm:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Branch Name *</label>
+                <label id="branchNameLabel" class="block text-sm font-medium text-gray-700 mb-1">Branch Name *</label>
                 <input type="text" name="name" value="{{ old('name') }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                <p id="branchNameHint" class="text-xs text-gray-500 mt-1">Use the official branch name.</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
@@ -30,10 +31,10 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Country Code</label>
-                <select name="country_code_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                <select id="countryCodeSelect" name="country_code_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Select code</option>
                     @foreach($countryCodes as $countryCode)
-                        <option value="{{ $countryCode->id }}" @selected((string) old('country_code_id') === (string) $countryCode->id)>
+                        <option value="{{ $countryCode->id }}" data-iso="{{ $countryCode->iso_code }}" @selected((string) old('country_code_id') === (string) $countryCode->id)>
                             +{{ $countryCode->dial_code }} ({{ $countryCode->country_name }})
                         </option>
                     @endforeach
@@ -62,12 +63,37 @@
             </div>
             <div class="sm:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Parent Branch</label>
-                <select name="parent_branch_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                <select id="parentBranchSelect" name="parent_branch_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">— None (top-level) —</option>
                     @foreach($branches as $b)
                         <option value="{{ $b->id }}" {{ old('parent_branch_id') == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div id="cameroonFields" class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                    <select id="regionSelect" name="region_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Select region</option>
+                        @foreach($regions as $region)
+                            <option value="{{ $region->id }}" @selected((string) old('region_id') === (string) $region->id)>
+                                {{ $region->item_number }}. {{ $region->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Division</label>
+                    <select id="divisionSelect" name="division_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Select division</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Subdivision (Optional)</label>
+                    <select id="subdivisionSelect" name="subdivision_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Select subdivision</option>
+                    </select>
+                </div>
             </div>
             <div class="sm:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -80,4 +106,80 @@
         </div>
     </form>
 </div>
+
+<script>
+function updateBranchNameUi() {
+    const parent = document.getElementById('parentBranchSelect');
+    const hasParent = parent && parent.value !== '';
+    const label = document.getElementById('branchNameLabel');
+    const hint = document.getElementById('branchNameHint');
+    if (!label || !hint) return;
+    label.textContent = hasParent ? 'Branch Alias *' : 'Branch Name *';
+    hint.textContent = hasParent
+        ? 'Since parent branch is selected, this acts as the alias/name used for this branch unit.'
+        : 'Use the official branch name.';
+}
+
+function toggleCameroonFields() {
+    const select = document.getElementById('countryCodeSelect');
+    const panel = document.getElementById('cameroonFields');
+    if (!select || !panel) return;
+    const opt = select.options[select.selectedIndex];
+    const isCameroon = opt && opt.dataset.iso === 'CM';
+    panel.classList.toggle('hidden', !isCameroon);
+}
+
+@php
+    $divisionsJson = $divisions->map(fn($d) => ['id' => $d->id, 'name' => $d->name, 'item_number' => $d->item_number, 'region_id' => $d->region_id])->values();
+    $subdivisionsJson = $subdivisions->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'item_number' => $s->item_number, 'division_id' => $s->division_id])->values();
+@endphp
+const allDivisions = @json($divisionsJson);
+const allSubdivisions = @json($subdivisionsJson);
+
+function populateDivisions(selectedDivisionId = '') {
+    const regionId = document.getElementById('regionSelect')?.value;
+    const divisionSelect = document.getElementById('divisionSelect');
+    if (!divisionSelect) return;
+    divisionSelect.innerHTML = '<option value="">Select division</option>';
+
+    allDivisions
+        .filter(d => String(d.region_id) === String(regionId))
+        .forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = `${d.item_number}. ${d.name}`;
+            if (String(selectedDivisionId) === String(d.id)) opt.selected = true;
+            divisionSelect.appendChild(opt);
+        });
+}
+
+function populateSubdivisions(selectedSubdivisionId = '') {
+    const divisionId = document.getElementById('divisionSelect')?.value;
+    const subdivisionSelect = document.getElementById('subdivisionSelect');
+    if (!subdivisionSelect) return;
+    subdivisionSelect.innerHTML = '<option value="">Select subdivision</option>';
+
+    allSubdivisions
+        .filter(s => String(s.division_id) === String(divisionId))
+        .forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = `${s.item_number}. ${s.name}`;
+            if (String(selectedSubdivisionId) === String(s.id)) opt.selected = true;
+            subdivisionSelect.appendChild(opt);
+        });
+}
+
+document.getElementById('parentBranchSelect')?.addEventListener('change', updateBranchNameUi);
+document.getElementById('countryCodeSelect')?.addEventListener('change', toggleCameroonFields);
+document.getElementById('regionSelect')?.addEventListener('change', () => {
+    populateDivisions('');
+    populateSubdivisions('');
+});
+document.getElementById('divisionSelect')?.addEventListener('change', () => populateSubdivisions(''));
+updateBranchNameUi();
+toggleCameroonFields();
+populateDivisions(@json(old('division_id')));
+populateSubdivisions(@json(old('subdivision_id')));
+</script>
 @endsection

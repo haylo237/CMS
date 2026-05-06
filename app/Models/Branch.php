@@ -13,7 +13,7 @@ class Branch extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'address', 'city', 'country_code_id', 'phone', 'email',
+        'name', 'address', 'city', 'region', 'division', 'subdivision', 'country_code_id', 'region_id', 'division_id', 'subdivision_id', 'phone', 'email',
         'pastor_id', 'parent_branch_id', 'description',
     ];
 
@@ -35,6 +35,21 @@ class Branch extends Model
     public function pastor(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'pastor_id');
+    }
+
+    public function regionRef(): BelongsTo
+    {
+        return $this->belongsTo(Region::class, 'region_id');
+    }
+
+    public function divisionRef(): BelongsTo
+    {
+        return $this->belongsTo(Division::class, 'division_id');
+    }
+
+    public function subdivisionRef(): BelongsTo
+    {
+        return $this->belongsTo(Subdivision::class, 'subdivision_id');
     }
 
     public function parentBranch(): BelongsTo

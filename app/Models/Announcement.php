@@ -42,13 +42,12 @@ class Announcement extends Model
         return $this->belongsTo(Member::class, 'published_by');
     }
 
-    public function scopeActive($query)
-        public function sendLogs(): HasMany
-        {
-            return $this->hasMany(WhatsAppSendLog::class);
-        }
+    public function sendLogs(): HasMany
+    {
+        return $this->hasMany(WhatsAppSendLog::class);
+    }
 
-        public function scopeActive($query)
+    public function scopeActive($query)
     {
         return $query->where(function ($q) {
             $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
