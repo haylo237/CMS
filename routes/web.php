@@ -27,8 +27,6 @@ Route::middleware(['auth'])->group(function () {
 
     // Members
     Route::resource('members', MemberController::class);
-    Route::post('members/{member}/departments', [MemberController::class, 'assignDepartment'])->name('members.departments.assign');
-    Route::delete('members/{member}/departments', [MemberController::class, 'removeDepartment'])->name('members.departments.remove');
     Route::post('members/{member}/ministries', [MemberController::class, 'assignMinistry'])->name('members.ministries.assign');
     Route::delete('members/{member}/ministries', [MemberController::class, 'removeMinistry'])->name('members.ministries.remove');
     Route::post('members/{member}/leadership', [MemberController::class, 'assignLeadership'])->name('members.leadership.assign');
@@ -36,6 +34,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Departments
     Route::resource('departments', DepartmentController::class);
+    Route::post('departments/{department}/members', [DepartmentController::class, 'assignMember'])->name('departments.members.assign');
+    Route::delete('departments/{department}/members', [DepartmentController::class, 'removeMember'])->name('departments.members.remove');
 
     // Ministries
     Route::resource('ministries', MinistryController::class);
@@ -51,7 +51,12 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('reports/{report}/review', [ReportController::class, 'review'])->name('reports.review');
 
     // Finance
-    Route::resource('finance', FinanceController::class);
+    Route::resource('finance', FinanceController::class)
+        ->only(['index', 'show'])
+        ->middleware('can:view-finance');
+    Route::resource('finance', FinanceController::class)
+        ->except(['index', 'show'])
+        ->middleware('can:manage-finance');
 
     // Branches
     Route::resource('branches', BranchController::class);

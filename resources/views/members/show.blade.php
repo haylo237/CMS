@@ -43,13 +43,6 @@
                     @foreach($member->departments as $dept)
                         <div class="flex items-center gap-1 bg-indigo-50 text-indigo-700 text-sm px-3 py-1 rounded-full border border-indigo-100">
                             {{ $dept->name }} <span class="text-indigo-400 text-xs">({{ $dept->pivot->role }})</span>
-                            @can('manage-members')
-                                <form method="POST" action="{{ route('members.departments.remove', $member) }}" class="inline">
-                                    @csrf @method('DELETE')
-                                    <input type="hidden" name="department_id" value="{{ $dept->id }}">
-                                    <button type="submit" class="ml-1 text-indigo-400 hover:text-red-500">&times;</button>
-                                </form>
-                            @endcan
                         </div>
                     @endforeach
                 </div>
@@ -57,23 +50,7 @@
                 <p class="text-sm text-gray-400 mb-4">Not assigned to any department.</p>
             @endif
 
-            @can('manage-members')
-                <form method="POST" action="{{ route('members.departments.assign', $member) }}" class="flex gap-2 flex-wrap">
-                    @csrf
-                    <select name="department_id" required class="border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
-                        <option value="">Select department</option>
-                        @foreach($departments as $dept)
-                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                        @endforeach
-                    </select>
-                    <select name="role" class="border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
-                        <option value="member">Member</option>
-                        <option value="assistant">Assistant</option>
-                        <option value="head">Head</option>
-                    </select>
-                    <button type="submit" class="bg-indigo-600 text-white text-sm px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition">Assign</button>
-                </form>
-            @endcan
+            <p class="text-xs text-gray-500">Department leaders and membership are managed from each department's edit page.</p>
         </div>
 
         {{-- Ministries --}}

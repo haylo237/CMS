@@ -3,7 +3,7 @@
 
 @section('content')
 @php
-    $currency = \App\Models\Setting::currencySymbol();
+    $money = fn($amount) => \App\Models\Setting::formatMoney($amount);
 @endphp
 {{-- Stats Row --}}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -33,16 +33,16 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     <div class="bg-white rounded-xl shadow-sm border p-5">
         <p class="text-sm text-gray-500 mb-1">Total Income</p>
-        <p class="text-2xl font-bold text-green-600">{{ $currency }}{{ number_format($stats['total_income'], 2) }}</p>
+        <p class="text-2xl font-bold text-green-600">{{ $money($stats['total_income']) }}</p>
     </div>
     <div class="bg-white rounded-xl shadow-sm border p-5">
         <p class="text-sm text-gray-500 mb-1">Total Expenses</p>
-        <p class="text-2xl font-bold text-red-500">{{ $currency }}{{ number_format($stats['total_expense'], 2) }}</p>
+        <p class="text-2xl font-bold text-red-500">{{ $money($stats['total_expense']) }}</p>
     </div>
     <div class="bg-white rounded-xl shadow-sm border p-5">
         <p class="text-sm text-gray-500 mb-1">Net Balance</p>
         <p class="text-2xl font-bold {{ ($stats['total_income'] - $stats['total_expense']) >= 0 ? 'text-green-600' : 'text-red-500' }}">
-            {{ $currency }}{{ number_format($stats['total_income'] - $stats['total_expense'], 2) }}
+            {{ $money($stats['total_income'] - $stats['total_expense']) }}
         </p>
     </div>
 </div>
@@ -166,7 +166,7 @@
                         <p class="text-xs text-gray-400">{{ $txn->recordedBy->full_name }} · {{ $txn->transaction_date->format('d M Y') }}</p>
                     </div>
                     <span class="text-sm font-semibold {{ $txn->type === 'income' ? 'text-green-600' : 'text-red-500' }}">
-                        {{ $txn->type === 'income' ? '+' : '-' }}{{ $currency }}{{ number_format($txn->amount, 2) }}
+                        {{ $txn->type === 'income' ? '+' : '-' }}{{ $money($txn->amount) }}
                     </span>
                 </div>
             @empty

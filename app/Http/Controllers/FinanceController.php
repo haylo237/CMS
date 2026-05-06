@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use App\Models\FinanceTransaction;
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -73,8 +74,23 @@ class FinanceController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $decimalPlaces = Setting::currencyDecimalPlaces();
         $validated = $request->validate([
-            'amount'           => 'required|numeric|min:0.01',
+            'amount'           => [
+                'required',
+                'numeric',
+                $decimalPlaces === 0 ? 'min:1' : 'min:0.01',
+                function (string $attribute, mixed $value, \Closure $fail) use ($decimalPlaces) {
+                    if ($decimalPlaces !== 0) {
+                        return;
+                    }
+
+                    $amount = (float) $value;
+                    if (abs($amount - round($amount)) > 0.000001) {
+                        $fail('The amount must not include decimals for the selected currency.');
+                    }
+                },
+            ],
             'type'             => 'required|in:income,expense',
             'category'         => 'required|string|max:255',
             'description'      => 'nullable|string',
@@ -83,6 +99,9 @@ class FinanceController extends Controller
             'reference_number' => 'nullable|string|max:100',
         ]);
 
+        $validated['amount'] = $decimalPlaces === 0
+            ? (float) round((float) $validated['amount'])
+            : (float) $validated['amount'];
         $validated['recorded_by'] = auth()->user()->member_id;
 
         FinanceTransaction::create($validated);
@@ -119,8 +138,23 @@ class FinanceController extends Controller
             abort(403);
         }
 
+        $decimalPlaces = Setting::currencyDecimalPlaces();
         $validated = $request->validate([
-            'amount'           => 'required|numeric|min:0.01',
+            'amount'           => [
+                'required',
+                'numeric',
+                $decimalPlaces === 0 ? 'min:1' : 'min:0.01',
+                function (string $attribute, mixed $value, \Closure $fail) use ($decimalPlaces) {
+                    if ($decimalPlaces !== 0) {
+                        return;
+                    }
+
+                    $amount = (float) $value;
+                    if (abs($amount - round($amount)) > 0.000001) {
+                        $fail('The amount must not include decimals for the selected currency.');
+                    }
+                },
+            ],
             'type'             => 'required|in:income,expense',
             'category'         => 'required|string|max:255',
             'description'      => 'nullable|string',
@@ -128,6 +162,10 @@ class FinanceController extends Controller
             'transaction_date' => 'required|date',
             'reference_number' => 'nullable|string|max:100',
         ]);
+
+        $validated['amount'] = $decimalPlaces === 0
+            ? (float) round((float) $validated['amount'])
+            : (float) $validated['amount'];
 
         $finance->update($validated);
 

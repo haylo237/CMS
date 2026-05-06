@@ -80,6 +80,43 @@
                 <textarea name="address" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">{{ old('address', $member->address) }}</textarea>
             </div>
 
+            <div class="border-t mt-2 pt-6 space-y-4">
+                <h3 class="text-sm font-semibold text-gray-600 uppercase">Leadership Roles</h3>
+
+                @if($member->leadershipRoles->isNotEmpty())
+                    <div class="flex flex-wrap gap-3">
+                        @foreach($member->leadershipRoles as $role)
+                            <div class="flex items-center gap-2 bg-amber-50 text-amber-700 text-sm px-3 py-1.5 rounded-full border border-amber-100">
+                                {{ $role->name }}
+                                @can('manage-leadership')
+                                    <form method="POST" action="{{ route('members.leadership.remove', $member) }}" class="inline">
+                                        @csrf @method('DELETE')
+                                        <input type="hidden" name="leadership_role_id" value="{{ $role->id }}">
+                                        <button type="submit" class="ml-1 text-amber-400 hover:text-red-500">&times;</button>
+                                    </form>
+                                @endcan
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-sm text-gray-400">No leadership role assigned.</p>
+                @endif
+
+                @can('manage-leadership')
+                    <form method="POST" action="{{ route('members.leadership.assign', $member) }}" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                        @csrf
+                        <select name="leadership_role_id" required class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            <option value="">Select role</option>
+                            @foreach($leadershipRoles as $role)
+                                <option value="{{ $role->id }}">{{ $role->name }}</option>
+                            @endforeach
+                        </select>
+                        <input type="date" name="assigned_at" class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                        <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition">Assign Role</button>
+                    </form>
+                @endcan
+            </div>
+
             <div class="flex gap-3 pt-2">
                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition">Update</button>
                 <a href="{{ route('members.show', $member) }}" class="text-sm text-gray-500 hover:underline py-2.5">Cancel</a>

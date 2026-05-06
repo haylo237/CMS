@@ -2,20 +2,20 @@
 @section('page-title', 'Finance')
 
 @section('content')
-@php($currency = \App\Models\Setting::currencySymbol())
+@php($money = fn($amount) => \App\Models\Setting::formatMoney($amount))
 {{-- Summary Cards --}}
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
     <div class="bg-white rounded-xl border shadow-sm p-5">
         <p class="text-sm text-gray-500 mb-1">Total Income</p>
-        <p class="text-2xl font-bold text-green-600">{{ $currency }}{{ number_format($totalIncome, 2) }}</p>
+        <p class="text-2xl font-bold text-green-600">{{ $money($totalIncome) }}</p>
     </div>
     <div class="bg-white rounded-xl border shadow-sm p-5">
         <p class="text-sm text-gray-500 mb-1">Total Expenses</p>
-        <p class="text-2xl font-bold text-red-500">{{ $currency }}{{ number_format($totalExpense, 2) }}</p>
+        <p class="text-2xl font-bold text-red-500">{{ $money($totalExpense) }}</p>
     </div>
     <div class="bg-white rounded-xl border shadow-sm p-5">
         <p class="text-sm text-gray-500 mb-1">Net Balance</p>
-        <p class="text-2xl font-bold {{ $balance >= 0 ? 'text-green-600' : 'text-red-500' }}">{{ $currency }}{{ number_format($balance, 2) }}</p>
+        <p class="text-2xl font-bold {{ $balance >= 0 ? 'text-green-600' : 'text-red-500' }}">{{ $money($balance) }}</p>
     </div>
 </div>
 
@@ -77,7 +77,7 @@
                     <td class="px-5 py-3 text-gray-500">{{ $txn->department->name ?? '—' }}</td>
                     <td class="px-5 py-3 text-gray-500">{{ $txn->recordedBy->full_name }}</td>
                     <td class="px-5 py-3 text-right font-semibold {{ $txn->type === 'income' ? 'text-green-600' : 'text-red-500' }}">
-                        {{ $txn->type === 'income' ? '+' : '-' }}{{ $currency }}{{ number_format($txn->amount, 2) }}
+                        {{ $txn->type === 'income' ? '+' : '-' }}{{ $money($txn->amount) }}
                     </td>
                     <td class="px-5 py-3 flex items-center gap-2">
                         <a href="{{ route('finance.show', $txn) }}" class="text-gray-400 hover:text-indigo-600 transition"><i class="fa-solid fa-eye"></i></a>

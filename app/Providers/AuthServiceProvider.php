@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\LeadershipRole;
+use App\Models\Member;
 use App\Models\Report;
 use App\Policies\ReportPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -18,11 +18,25 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
+        $isFinanceCoordinator = function ($user): bool {
+            if ($user->isFinanceOfficer()) {
+                return true;
+            }
+
+            if (!$user->member_id) {
+                return false;
+            }
+
+            return Member::where('id', $user->member_id)
+                ->whereHas('leadershipRoles', fn($q) => $q->where('name', 'ilike', 'Finance Coordinator'))
+                ->exists();
+        };
+
         // Admin-level gates
         Gate::define('manage-users', fn($user) => $user->isAdmin());
         Gate::define('manage-settings', fn($user) => $user->isAdmin());
-        Gate::define('view-finance', fn($user) => $user->hasRole(['super_admin', 'admin', 'pastor', 'finance_officer']));
-        Gate::define('manage-finance', fn($user) => $user->hasRole(['super_admin', 'admin', 'finance_officer']));
+        Gate::define('view-finance', fn($user) => $user->hasRole(['super_admin', 'admin', 'pastor']) || $isFinanceCoordinator($user));
+        Gate::define('manage-finance', fn($user) => $isFinanceCoordinator($user));
         Gate::define('manage-members', fn($user) => $user->hasRole(['super_admin', 'admin']));
         Gate::define('manage-departments', fn($user) => $user->hasRole(['super_admin', 'admin']));
         Gate::define('manage-ministries', fn($user) => $user->hasRole(['super_admin', 'admin']));

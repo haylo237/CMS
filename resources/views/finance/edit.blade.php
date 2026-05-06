@@ -2,6 +2,7 @@
 @section('page-title', 'Edit Transaction')
 
 @section('content')
+@php($decimalPlaces = \App\Models\Setting::currencyDecimalPlaces())
 <div class="max-w-xl">
     <div class="flex items-center gap-3 mb-6">
         <a href="{{ route('finance.show', $finance) }}" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-arrow-left"></i></a>
@@ -14,7 +15,10 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Amount <span class="text-red-500">*</span></label>
-                    <input type="number" step="0.01" name="amount" value="{{ old('amount', $finance->amount) }}" required min="0.01" class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    <input type="number" step="{{ $decimalPlaces === 0 ? '1' : '0.01' }}" name="amount" value="{{ old('amount', $finance->amount) }}" required min="{{ $decimalPlaces === 0 ? '1' : '0.01' }}" class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    @if($decimalPlaces === 0)
+                        <p class="text-xs text-gray-500 mt-1">This currency does not use decimal amounts.</p>
+                    @endif
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Type <span class="text-red-500">*</span></label>

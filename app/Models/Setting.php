@@ -92,6 +92,29 @@ class Setting extends Model
         return static::currentCurrency()?->symbol ?? 'NGN';
     }
 
+    public static function currencyCode(): string
+    {
+        return static::currentCurrency()?->code ?? 'NGN';
+    }
+
+    public static function currencyDecimalPlaces(): int
+    {
+        // Most African currencies in active church deployments are non-decimal in practice.
+        $zeroDecimalCurrencies = [
+            'DZD', 'AOA', 'BWP', 'BIF', 'CVE', 'KMF', 'CDF', 'DJF', 'EGP', 'ERN', 'ETB',
+            'GMD', 'GHS', 'GNF', 'KES', 'LSL', 'LRD', 'LYD', 'MGA', 'MWK', 'MRU', 'MUR',
+            'MAD', 'MZN', 'NAD', 'NGN', 'RWF', 'SHP', 'SLE', 'SOS', 'ZAR', 'SSP', 'SDG',
+            'SZL', 'TZS', 'TND', 'UGX', 'XAF', 'XOF', 'ZMW', 'ZWL',
+        ];
+
+        return in_array(strtoupper(static::currencyCode()), $zeroDecimalCurrencies, true) ? 0 : 2;
+    }
+
+    public static function formatMoney(float|int|string|null $amount): string
+    {
+        return static::currencySymbol() . number_format((float) ($amount ?? 0), static::currencyDecimalPlaces());
+    }
+
     public static function churchCountryCode(): ?CountryCode
     {
         $countryCodeId = static::get('church_country_code_id');

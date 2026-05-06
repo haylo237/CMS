@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\CountryCode;
-use App\Models\Department;
 use App\Models\Member;
 use App\Models\Ministry;
 use App\Models\LeadershipRole;
@@ -88,11 +87,10 @@ class MemberController extends Controller
 
         $member->load(['countryCode', 'departments', 'ministries', 'leadershipRoles', 'user']);
 
-        $departments      = Department::orderBy('name')->get();
         $ministries       = Ministry::orderBy('name')->get();
         $leadershipRoles  = LeadershipRole::orderBy('rank')->get();
 
-        return view('members.show', compact('member', 'departments', 'ministries', 'leadershipRoles'));
+        return view('members.show', compact('member', 'ministries', 'leadershipRoles'));
     }
 
     public function edit(Member $member): View
@@ -101,9 +99,11 @@ class MemberController extends Controller
             abort(403);
         }
 
+        $member->load('leadershipRoles');
         $countryCodes = CountryCode::where('is_active', true)->orderBy('country_name')->get();
+        $leadershipRoles = LeadershipRole::orderBy('rank')->get();
 
-        return view('members.edit', compact('member', 'countryCodes'));
+        return view('members.edit', compact('member', 'countryCodes', 'leadershipRoles'));
     }
 
     public function update(Request $request, Member $member): RedirectResponse
@@ -144,28 +144,6 @@ class MemberController extends Controller
 
         return redirect()->route('members.index')
                          ->with('success', 'Member removed successfully.');
-    }
-
-    public function assignDepartment(Request $request, Member $member): RedirectResponse
-    {
-        $request->validate([
-            'department_id' => 'required|exists:departments,id',
-            'role'          => 'required|in:head,assistant,member',
-        ]);
-
-        $member->departments()->syncWithoutDetaching([
-            $request->department_id => ['role' => $request->role],
-        ]);
-
-        return back()->with('success', 'Department assigned.');
-    }
-
-    public function removeDepartment(Request $request, Member $member): RedirectResponse
-    {
-        $request->validate(['department_id' => 'required|exists:departments,id']);
-        $member->departments()->detach($request->department_id);
-
-        return back()->with('success', 'Department removed.');
     }
 
     public function assignMinistry(Request $request, Member $member): RedirectResponse
