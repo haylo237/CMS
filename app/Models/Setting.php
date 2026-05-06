@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use App\Support\PhoneNumber;
 
 class Setting extends Model
 {
@@ -64,5 +65,47 @@ class Setting extends Model
     public static function allKeyed(): array
     {
         return static::all()->pluck('value', 'key')->toArray();
+    }
+
+    public static function currentCurrency(): ?Currency
+    {
+        $currencyId = static::get('currency_id');
+
+        if ($currencyId) {
+            return Currency::find($currencyId);
+        }
+
+        $legacySymbol = static::get('currency_symbol');
+
+        return match ($legacySymbol) {
+            'USD' => Currency::where('code', 'USD')->first(),
+            'GBP' => Currency::where('code', 'GBP')->first(),
+            'EUR' => Currency::where('code', 'EUR')->first(),
+            'GHS' => Currency::where('code', 'GHS')->first(),
+            'KES' => Currency::where('code', 'KES')->first(),
+            default => Currency::where('code', 'NGN')->first(),
+        };
+    }
+
+    public static function currencySymbol(): string
+    {
+        return static::currentCurrency()?->symbol ?? 'NGN';
+    }
+
+    public static function churchCountryCode(): ?CountryCode
+    {
+        $countryCodeId = static::get('church_country_code_id');
+
+        return $countryCodeId ? CountryCode::find($countryCodeId) : null;
+    }
+
+    public static function churchDisplayPhone(): ?string
+    {
+        return PhoneNumber::display(static::get('church_phone'), static::churchCountryCode()?->dial_code);
+    }
+
+    public static function churchFullPhone(): ?string
+    {
+        return PhoneNumber::normalize(static::get('church_phone'), static::churchCountryCode()?->dial_code);
     }
 }

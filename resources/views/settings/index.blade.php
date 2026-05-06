@@ -6,6 +6,7 @@
 @php
     $activeTab = session('tab', request('tab', 'general'));
     $s = fn(string $key, $default = '') => \App\Models\Setting::get($key, $default);
+    $selectedCurrencyId = (int) ($s('currency_id') ?: \App\Models\Setting::currentCurrency()?->id);
 @endphp
 
 <div class="flex items-center justify-between mb-6">
@@ -59,6 +60,17 @@
                 <input type="text" name="church_city" value="{{ $s('church_city') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             </div>
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Church Phone Country Code</label>
+                <select name="church_country_code_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="">Select code</option>
+                    @foreach($countryCodes as $countryCode)
+                        <option value="{{ $countryCode->id }}" @selected((string) $s('church_country_code_id') === (string) $countryCode->id)>
+                            +{{ $countryCode->dial_code }} ({{ $countryCode->country_name }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                 <input type="text" name="church_phone" value="{{ $s('church_phone') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             </div>
@@ -79,8 +91,14 @@
                 <input type="text" name="church_motto" value="{{ $s('church_motto') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Currency Symbol</label>
-                <input type="text" name="currency_symbol" value="{{ $s('currency_symbol', '₦') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                <select name="currency_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    @foreach($currencies as $currency)
+                        <option value="{{ $currency->id }}" @selected($selectedCurrencyId === $currency->id)>
+                            {{ $currency->name }} ({{ $currency->code }})
+                        </option>
+                    @endforeach
+                </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
@@ -378,11 +396,15 @@
                 <p class="text-xs text-gray-400 mt-1">Found in Meta Business → WhatsApp → API Setup</p>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Default Country Code</label>
-                <input type="text" name="whatsapp_country_code" value="{{ $s('whatsapp_country_code','234') }}"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"
-                    placeholder="234">
-                <p class="text-xs text-gray-400 mt-1">Digits only, no +. Used to prefix local numbers.</p>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fallback Country Code</label>
+                <select name="whatsapp_country_code" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    @foreach($countryCodes as $countryCode)
+                        <option value="{{ $countryCode->dial_code }}" @selected($s('whatsapp_country_code','234') === $countryCode->dial_code)>
+                            +{{ $countryCode->dial_code }} ({{ $countryCode->country_name }})
+                        </option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-400 mt-1">Used only when a number has no linked country selection.</p>
             </div>
             <div class="sm:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Permanent Access Token</label>

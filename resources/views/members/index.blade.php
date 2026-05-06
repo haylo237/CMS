@@ -63,7 +63,7 @@
                         </a>
                     </td>
                     <td class="px-5 py-3 text-gray-500">{{ $member->email ?? '—' }}</td>
-                    <td class="px-5 py-3 text-gray-500">{{ $member->phone ?? '—' }}</td>
+                    <td class="px-5 py-3 text-gray-500">{{ $member->display_phone ?? '—' }}</td>
                     <td class="px-5 py-3 capitalize text-gray-500">{{ $member->gender ?? '—' }}</td>
                     <td class="px-5 py-3">
                         <span class="px-2 py-0.5 rounded-full text-xs font-medium

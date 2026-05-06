@@ -29,6 +29,17 @@
                 <input type="text" name="city" value="{{ old('city', $branch->city) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
             </div>
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Country Code</label>
+                <select name="country_code_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select code</option>
+                    @foreach($countryCodes as $countryCode)
+                        <option value="{{ $countryCode->id }}" @selected((string) old('country_code_id', $branch->country_code_id) === (string) $countryCode->id)>
+                            +{{ $countryCode->dial_code }} ({{ $countryCode->country_name }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                 <input type="text" name="phone" value="{{ old('phone', $branch->phone) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
             </div>

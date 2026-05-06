@@ -15,6 +15,11 @@ class ReportController extends Controller
     public function index(Request $request): View
     {
         $query = Report::with(['submittedBy', 'department', 'ministry']);
+        $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
+
+        if ($branchId) {
+            $query->whereHas('submittedBy', fn($q) => $q->where('branch_id', $branchId));
+        }
 
         if ($request->filled('type')) {
             $query->where('report_type', $request->type);
@@ -75,6 +80,10 @@ class ReportController extends Controller
 
     public function show(Report $report): View
     {
+        if (auth()->user()?->isPastor() && $report->submittedBy?->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $report->load(['submittedBy', 'reviewedBy', 'department', 'ministry']);
 
         return view('reports.show', compact('report'));
@@ -82,6 +91,10 @@ class ReportController extends Controller
 
     public function edit(Report $report): View
     {
+        if (auth()->user()?->isPastor() && $report->submittedBy?->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         Gate::authorize('update', $report);
 
         $departments = Department::orderBy('name')->get();
@@ -92,6 +105,10 @@ class ReportController extends Controller
 
     public function update(Request $request, Report $report): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $report->submittedBy?->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         Gate::authorize('update', $report);
 
         $validated = $request->validate([
@@ -113,6 +130,10 @@ class ReportController extends Controller
 
     public function submit(Report $report): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $report->submittedBy?->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         Gate::authorize('submit', $report);
 
         $report->update(['status' => 'submitted']);
@@ -123,6 +144,10 @@ class ReportController extends Controller
 
     public function review(Request $request, Report $report): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $report->submittedBy?->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         Gate::authorize('review', $report);
 
         $request->validate([
@@ -142,6 +167,10 @@ class ReportController extends Controller
 
     public function destroy(Report $report): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $report->submittedBy?->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         Gate::authorize('delete', $report);
 
         $report->delete();

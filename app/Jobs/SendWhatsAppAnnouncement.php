@@ -43,7 +43,7 @@ class SendWhatsAppAnnouncement implements ShouldQueue
                 ->get();
 
             foreach ($members as $member) {
-                $success = $whatsApp->sendMessage($member->phone, $this->message);
+                $success = $whatsApp->sendMessage($member->full_phone_number ?? $member->phone, $this->message);
                 $success ? $sent++ : $failed++;
             }
         }

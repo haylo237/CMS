@@ -8,10 +8,12 @@
     <h1 class="text-2xl font-bold text-gray-900">{{ $branch->name }}</h1>
     <div class="ml-auto flex gap-2">
         <a href="{{ route('branches.edit', $branch) }}" class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 text-sm font-medium px-3 py-1.5 rounded-lg border border-yellow-200">Edit</a>
-        <form method="POST" action="{{ route('branches.destroy', $branch) }}" onsubmit="return confirm('Delete this branch?')">
-            @csrf @method('DELETE')
-            <button class="bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium px-3 py-1.5 rounded-lg border border-red-200">Delete</button>
-        </form>
+        @if(auth()->user()->isAdmin())
+            <form method="POST" action="{{ route('branches.destroy', $branch) }}" onsubmit="return confirm('Delete this branch?')">
+                @csrf @method('DELETE')
+                <button class="bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium px-3 py-1.5 rounded-lg border border-red-200">Delete</button>
+            </form>
+        @endif
     </div>
 </div>
 
@@ -21,7 +23,7 @@
         <h2 class="font-semibold text-gray-700 text-sm uppercase tracking-wide">Branch Info</h2>
         @if($branch->city)<p class="text-sm"><span class="text-gray-500">City:</span> {{ $branch->city }}</p>@endif
         @if($branch->address)<p class="text-sm"><span class="text-gray-500">Address:</span> {{ $branch->address }}</p>@endif
-        @if($branch->phone)<p class="text-sm"><span class="text-gray-500">Phone:</span> {{ $branch->phone }}</p>@endif
+        @if($branch->display_phone)<p class="text-sm"><span class="text-gray-500">Phone:</span> {{ $branch->display_phone }}</p>@endif
         @if($branch->email)<p class="text-sm"><span class="text-gray-500">Email:</span> {{ $branch->email }}</p>@endif
         @if($branch->pastor)<p class="text-sm"><span class="text-gray-500">Pastor:</span> <a href="{{ route('members.show', $branch->pastor) }}" class="text-indigo-600 hover:underline">{{ $branch->pastor->full_name }}</a></p>@endif
         @if($branch->parentBranch)<p class="text-sm"><span class="text-gray-500">Parent:</span> <a href="{{ route('branches.show', $branch->parentBranch) }}" class="text-indigo-600 hover:underline">{{ $branch->parentBranch->name }}</a></p>@endif

@@ -5,9 +5,11 @@
 @section('content')
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Branches</h1>
-    <a href="{{ route('branches.create') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
-        <i class="fa-solid fa-plus"></i> New Branch
-    </a>
+    @if(auth()->user()->isAdmin())
+        <a href="{{ route('branches.create') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+            <i class="fa-solid fa-plus"></i> New Branch
+        </a>
+    @endif
 </div>
 
 @if(session('success'))
@@ -42,17 +44,19 @@
                 <a href="{{ route('branches.show', $branch) }}" class="text-indigo-600 hover:underline text-sm">View</a>
                 <span class="text-gray-300">|</span>
                 <a href="{{ route('branches.edit', $branch) }}" class="text-yellow-600 hover:underline text-sm">Edit</a>
-                <span class="text-gray-300">|</span>
-                <form method="POST" action="{{ route('branches.destroy', $branch) }}" onsubmit="return confirm('Delete this branch?')">
-                    @csrf @method('DELETE')
-                    <button class="text-red-600 hover:underline text-sm">Delete</button>
-                </form>
+                @if(auth()->user()->isAdmin())
+                    <span class="text-gray-300">|</span>
+                    <form method="POST" action="{{ route('branches.destroy', $branch) }}" onsubmit="return confirm('Delete this branch?')">
+                        @csrf @method('DELETE')
+                        <button class="text-red-600 hover:underline text-sm">Delete</button>
+                    </form>
+                @endif
             </div>
         </div>
     @empty
         <div class="col-span-3 text-center py-16 text-gray-400">
             <i class="fa-solid fa-code-branch text-4xl mb-3"></i>
-            <p>No branches yet. <a href="{{ route('branches.create') }}" class="text-indigo-600 underline">Add one</a>.</p>
+            <p>No branches yet.@if(auth()->user()->isAdmin()) <a href="{{ route('branches.create') }}" class="text-indigo-600 underline">Add one</a>. @endif</p>
         </div>
     @endforelse
 </div>

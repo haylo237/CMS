@@ -13,6 +13,11 @@ class FinanceController extends Controller
     public function index(Request $request): View
     {
         $query = FinanceTransaction::with(['recordedBy', 'department']);
+        $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
+
+        if ($branchId) {
+            $query->whereHas('recordedBy', fn($q) => $q->where('branch_id', $branchId));
+        }
 
         if ($request->filled('type')) {
             $query->where('type', $request->type);
@@ -33,12 +38,17 @@ class FinanceController extends Controller
         $transactions = $query->orderByDesc('transaction_date')->paginate(20)->withQueryString();
         $departments  = Department::orderBy('name')->get();
 
-        $totalIncome  = FinanceTransaction::income()->sum('amount');
-        $totalExpense = FinanceTransaction::expense()->sum('amount');
+        $summaryQuery = FinanceTransaction::query();
+        if ($branchId) {
+            $summaryQuery->whereHas('recordedBy', fn($q) => $q->where('branch_id', $branchId));
+        }
+
+        $totalIncome  = (clone $summaryQuery)->income()->sum('amount');
+        $totalExpense = (clone $summaryQuery)->expense()->sum('amount');
         $balance      = $totalIncome - $totalExpense;
 
         // Monthly summary for current year
-        $monthlySummary = FinanceTransaction::selectRaw(
+        $monthlySummary = $summaryQuery->selectRaw(
             "DATE_TRUNC('month', transaction_date) AS month,
              SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) AS income,
              SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) AS expense"
@@ -83,6 +93,10 @@ class FinanceController extends Controller
 
     public function show(FinanceTransaction $finance): View
     {
+        if (auth()->user()?->isPastor() && $finance->recordedBy?->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $finance->load(['recordedBy', 'department']);
 
         return view('finance.show', compact('finance'));
@@ -90,6 +104,10 @@ class FinanceController extends Controller
 
     public function edit(FinanceTransaction $finance): View
     {
+        if (auth()->user()?->isPastor() && $finance->recordedBy?->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $departments = Department::orderBy('name')->get();
 
         return view('finance.edit', compact('finance', 'departments'));
@@ -97,6 +115,10 @@ class FinanceController extends Controller
 
     public function update(Request $request, FinanceTransaction $finance): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $finance->recordedBy?->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'amount'           => 'required|numeric|min:0.01',
             'type'             => 'required|in:income,expense',
@@ -115,6 +137,10 @@ class FinanceController extends Controller
 
     public function destroy(FinanceTransaction $finance): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $finance->recordedBy?->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $finance->delete();
 
         return redirect()->route('finance.index')

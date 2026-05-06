@@ -22,7 +22,7 @@
         <dl class="space-y-3 text-sm">
             <div><dt class="text-gray-400">Full Name</dt><dd class="font-medium">{{ $member->full_name }}</dd></div>
             <div><dt class="text-gray-400">Email</dt><dd>{{ $member->email ?? '—' }}</dd></div>
-            <div><dt class="text-gray-400">Phone</dt><dd>{{ $member->phone ?? '—' }}</dd></div>
+            <div><dt class="text-gray-400">Phone</dt><dd>{{ $member->display_phone ?? '—' }}</dd></div>
             <div><dt class="text-gray-400">Gender</dt><dd class="capitalize">{{ $member->gender ?? '—' }}</dd></div>
             <div><dt class="text-gray-400">Date of Birth</dt><dd>{{ $member->date_of_birth?->format('d M Y') ?? '—' }}</dd></div>
             <div><dt class="text-gray-400">Status</dt>

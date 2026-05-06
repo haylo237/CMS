@@ -6,15 +6,31 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Support\PhoneNumber;
 
 class Branch extends Model
 {
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'address', 'city', 'phone', 'email',
+        'name', 'address', 'city', 'country_code_id', 'phone', 'email',
         'pastor_id', 'parent_branch_id', 'description',
     ];
+
+    public function countryCode(): BelongsTo
+    {
+        return $this->belongsTo(CountryCode::class);
+    }
+
+    public function getFullPhoneNumberAttribute(): ?string
+    {
+        return PhoneNumber::normalize($this->phone, $this->countryCode?->dial_code);
+    }
+
+    public function getDisplayPhoneAttribute(): ?string
+    {
+        return PhoneNumber::display($this->phone, $this->countryCode?->dial_code);
+    }
 
     public function pastor(): BelongsTo
     {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CountryCode;
 use App\Models\Department;
 use App\Models\Member;
 use App\Models\Ministry;
@@ -14,7 +15,12 @@ class MemberController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Member::query();
+        $query = Member::with('countryCode');
+        $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -41,7 +47,13 @@ class MemberController extends Controller
 
     public function create(): View
     {
-        return view('members.create');
+        if (auth()->user()?->isPastor() && !auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
+        $countryCodes = CountryCode::where('is_active', true)->orderBy('country_name')->get();
+
+        return view('members.create', compact('countryCodes'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -49,6 +61,7 @@ class MemberController extends Controller
         $validated = $request->validate([
             'first_name'    => 'required|string|max:255',
             'last_name'     => 'required|string|max:255',
+            'country_code_id' => 'nullable|exists:country_codes,id',
             'phone'         => 'nullable|string|max:20',
             'email'         => 'nullable|email|unique:members,email',
             'gender'        => 'nullable|in:male,female,other',
@@ -56,6 +69,10 @@ class MemberController extends Controller
             'status'        => 'required|in:active,inactive,deceased,transferred',
             'address'       => 'nullable|string',
         ]);
+
+        if (auth()->user()?->isPastor()) {
+            $validated['branch_id'] = auth()->user()->pastoredBranchId();
+        }
 
         $member = Member::create($validated);
 
@@ -65,7 +82,11 @@ class MemberController extends Controller
 
     public function show(Member $member): View
     {
-        $member->load(['departments', 'ministries', 'leadershipRoles', 'user']);
+        if (auth()->user()?->isPastor() && $member->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
+        $member->load(['countryCode', 'departments', 'ministries', 'leadershipRoles', 'user']);
 
         $departments      = Department::orderBy('name')->get();
         $ministries       = Ministry::orderBy('name')->get();
@@ -76,14 +97,25 @@ class MemberController extends Controller
 
     public function edit(Member $member): View
     {
-        return view('members.edit', compact('member'));
+        if (auth()->user()?->isPastor() && $member->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
+        $countryCodes = CountryCode::where('is_active', true)->orderBy('country_name')->get();
+
+        return view('members.edit', compact('member', 'countryCodes'));
     }
 
     public function update(Request $request, Member $member): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $member->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'first_name'    => 'required|string|max:255',
             'last_name'     => 'required|string|max:255',
+            'country_code_id' => 'nullable|exists:country_codes,id',
             'phone'         => 'nullable|string|max:20',
             'email'         => 'nullable|email|unique:members,email,' . $member->id,
             'gender'        => 'nullable|in:male,female,other',
@@ -91,6 +123,10 @@ class MemberController extends Controller
             'status'        => 'required|in:active,inactive,deceased,transferred',
             'address'       => 'nullable|string',
         ]);
+
+        if (auth()->user()?->isPastor()) {
+            $validated['branch_id'] = auth()->user()->pastoredBranchId();
+        }
 
         $member->update($validated);
 
@@ -100,6 +136,10 @@ class MemberController extends Controller
 
     public function destroy(Member $member): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $member->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $member->delete();
 
         return redirect()->route('members.index')

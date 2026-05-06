@@ -81,4 +81,18 @@ class User extends Authenticatable
     {
         return $this->role === 'finance_officer';
     }
+
+    public function pastoredBranch(): ?Branch
+    {
+        if (!$this->member_id) {
+            return null;
+        }
+
+        return Branch::where('pastor_id', $this->member_id)->first();
+    }
+
+    public function pastoredBranchId(): ?int
+    {
+        return $this->pastoredBranch()?->id;
+    }
 }

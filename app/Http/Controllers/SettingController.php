@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CountryCode;
+use App\Models\Currency;
 use App\Models\DocumentTemplate;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
@@ -19,8 +21,10 @@ class SettingController extends Controller
         $groups    = ['general', 'branding', 'finance', 'notifications'];
         $settings  = Setting::all()->groupBy('group');
         $templates = DocumentTemplate::with('uploadedBy')->latest()->get()->groupBy('type');
+        $currencies = Currency::where('is_active', true)->orderBy('name')->get();
+        $countryCodes = CountryCode::where('is_active', true)->orderBy('country_name')->get();
 
-        return view('settings.index', compact('settings', 'templates', 'groups'));
+        return view('settings.index', compact('settings', 'templates', 'groups', 'currencies', 'countryCodes'));
     }
 
     // ─── General / Finance / Notifications tabs ───────────────────────
@@ -28,10 +32,16 @@ class SettingController extends Controller
     public function updateGeneral(Request $request): RedirectResponse
     {
 
+        $request->validate([
+            'currency_id' => 'nullable|exists:currencies,id',
+            'church_country_code_id' => 'nullable|exists:country_codes,id',
+            'timezone' => 'nullable|string|max:100',
+        ]);
+
         $keys = [
             'church_name', 'church_address', 'church_city',
             'church_phone', 'church_email', 'church_website', 'church_motto',
-            'currency_symbol', 'timezone',
+            'timezone',
         ];
 
         foreach ($keys as $key) {
@@ -39,6 +49,16 @@ class SettingController extends Controller
                 Setting::set($key, $request->input($key));
             }
         }
+
+        if ($request->filled('currency_id')) {
+            $currency = Currency::find($request->integer('currency_id'));
+            if ($currency) {
+                Setting::set('currency_id', (string) $currency->id);
+                Setting::set('currency_symbol', $currency->symbol);
+            }
+        }
+
+        Setting::set('church_country_code_id', $request->input('church_country_code_id', ''));
 
         return back()->with('success', 'General settings saved.')->with('tab', 'general');
     }

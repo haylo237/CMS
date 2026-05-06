@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\PhoneNumber;
 
 class Member extends Model
 {
@@ -15,6 +17,7 @@ class Member extends Model
     protected $fillable = [
         'first_name',
         'last_name',
+        'country_code_id',
         'phone',
         'email',
         'gender',
@@ -34,9 +37,24 @@ class Member extends Model
         return "{$this->first_name} {$this->last_name}";
     }
 
+    public function getFullPhoneNumberAttribute(): ?string
+    {
+        return PhoneNumber::normalize($this->phone, $this->countryCode?->dial_code);
+    }
+
+    public function getDisplayPhoneAttribute(): ?string
+    {
+        return PhoneNumber::display($this->phone, $this->countryCode?->dial_code);
+    }
+
     public function user(): HasOne
     {
         return $this->hasOne(User::class);
+    }
+
+    public function countryCode(): BelongsTo
+    {
+        return $this->belongsTo(CountryCode::class);
     }
 
     public function departments(): BelongsToMany
@@ -75,7 +93,7 @@ class Member extends Model
         return $this->hasMany(FinanceTransaction::class, 'recorded_by');
     }
 
-    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }

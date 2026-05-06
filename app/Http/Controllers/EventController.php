@@ -14,7 +14,14 @@ class EventController extends Controller
 {
     public function index(Request $request): View
     {
+        $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
         $query = Event::with(['branch', 'createdBy'])->withCount('attendances');
+
+        if ($branchId) {
+            $query->where(function ($q) use ($branchId) {
+                $q->whereNull('branch_id')->orWhere('branch_id', $branchId);
+            });
+        }
 
         if ($request->filled('branch_id')) {
             $query->where('branch_id', $request->branch_id);
@@ -30,14 +37,15 @@ class EventController extends Controller
         }
 
         $events   = $query->orderByDesc('date')->paginate(15)->withQueryString();
-        $branches = Branch::all();
+        $branches = $branchId ? Branch::where('id', $branchId)->get() : Branch::all();
         return view('events.index', compact('events', 'branches'));
     }
 
     public function create(): View
     {
-        $branches = Branch::all();
-        $members  = Member::orderBy('first_name')->get();
+        $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
+        $branches = $branchId ? Branch::where('id', $branchId)->get() : Branch::all();
+        $members  = Member::when($branchId, fn($q) => $q->where('branch_id', $branchId))->orderBy('first_name')->get();
         return view('events.create', compact('branches', 'members'));
     }
 
@@ -53,27 +61,43 @@ class EventController extends Controller
         ]);
 
         $data['created_by'] = auth()->user()->member_id;
+        if (auth()->user()?->isPastor()) {
+            $data['branch_id'] = auth()->user()->pastoredBranchId();
+        }
         Event::create($data);
         return redirect()->route('events.index')->with('success', 'Event created successfully.');
     }
 
     public function show(Event $event): View
     {
+        if (auth()->user()?->isPastor() && $event->branch_id && $event->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $event->load(['branch', 'createdBy', 'attendances.member']);
-        $members        = Member::orderBy('first_name')->get();
+        $members        = Member::when($event->branch_id, fn($q) => $q->where('branch_id', $event->branch_id))->orderBy('first_name')->get();
         $attended_ids   = $event->attendances->pluck('member_id')->toArray();
         return view('events.show', compact('event', 'members', 'attended_ids'));
     }
 
     public function edit(Event $event): View
     {
-        $branches = Branch::all();
-        $members  = Member::orderBy('first_name')->get();
+        if (auth()->user()?->isPastor() && $event->branch_id && $event->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
+        $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
+        $branches = $branchId ? Branch::where('id', $branchId)->get() : Branch::all();
+        $members  = Member::when($event->branch_id ?: $branchId, fn($q, $value) => $q->where('branch_id', $value))->orderBy('first_name')->get();
         return view('events.edit', compact('event', 'branches', 'members'));
     }
 
     public function update(Request $request, Event $event): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $event->branch_id && $event->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $data = $request->validate([
             'title'       => 'required|string|max:255',
             'type'        => 'required|in:service,meeting,special,prayer,outreach',
@@ -83,18 +107,30 @@ class EventController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        if (auth()->user()?->isPastor()) {
+            $data['branch_id'] = auth()->user()->pastoredBranchId();
+        }
+
         $event->update($data);
         return redirect()->route('events.index')->with('success', 'Event updated successfully.');
     }
 
     public function destroy(Event $event): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $event->branch_id && $event->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $event->delete();
         return redirect()->route('events.index')->with('success', 'Event deleted.');
     }
 
     public function markAttendance(Request $request, Event $event): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $event->branch_id && $event->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $request->validate([
             'attendances'          => 'nullable|array',
             'attendances.*.member_id' => 'required|exists:members,id',

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -73,26 +74,9 @@ class WhatsAppService
      */
     public function normalizePhone(string $phone): ?string
     {
-        // Strip everything except digits and leading +
-        $digits = preg_replace('/[^\d]/', '', $phone);
-
-        if (empty($digits)) {
-            return null;
-        }
-
-        // Already has country code (11+ digits starting with country code)
-        if (strlen($digits) >= 11 && !str_starts_with($digits, '0')) {
-            return $digits;
-        }
-
-        // Strip leading 0 for local numbers (e.g. 0803... → 803...)
-        if (str_starts_with($digits, '0')) {
-            $digits = substr($digits, 1);
-        }
-
-        // Default country code: Nigeria (234)
-        $countryCode = Setting::get('whatsapp_country_code', '234');
-
-        return $countryCode . $digits;
+        return PhoneNumber::normalize(
+            $phone,
+            Setting::churchCountryCode()?->dial_code ?? Setting::get('whatsapp_country_code', '234')
+        );
     }
 }

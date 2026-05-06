@@ -2,6 +2,7 @@
 @section('page-title', 'Transaction Detail')
 
 @section('content')
+@php($currency = \App\Models\Setting::currencySymbol())
 <div class="max-w-xl">
     <div class="flex items-center gap-3 mb-6">
         <a href="{{ route('finance.index') }}" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-arrow-left"></i></a>
@@ -15,7 +16,7 @@
             <div class="flex justify-between">
                 <dt class="text-gray-500">Amount</dt>
                 <dd class="font-bold text-lg {{ $finance->type === 'income' ? 'text-green-600' : 'text-red-500' }}">
-                    {{ $finance->type === 'income' ? '+' : '-' }}₦{{ number_format($finance->amount, 2) }}
+                    {{ $finance->type === 'income' ? '+' : '-' }}{{ $currency }}{{ number_format($finance->amount, 2) }}
                 </dd>
             </div>
             <div><dt class="text-gray-400">Type</dt><dd class="capitalize font-medium">{{ $finance->type }}</dd></div>

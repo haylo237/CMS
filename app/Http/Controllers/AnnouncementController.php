@@ -19,7 +19,13 @@ class AnnouncementController extends Controller
 {
     public function index(): View
     {
+        $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
         $announcements = Announcement::with(['publishedBy', 'branch', 'department', 'ministry'])
+                                     ->when($branchId, function ($q) use ($branchId) {
+                                         $q->where(function ($inner) use ($branchId) {
+                                             $inner->where('audience', 'all')->orWhere('branch_id', $branchId);
+                                         });
+                                     })
                                      ->latest()
                                      ->paginate(15);
         return view('announcements.index', compact('announcements'));
@@ -27,7 +33,8 @@ class AnnouncementController extends Controller
 
     public function create(): View
     {
-        $branches    = Branch::all();
+        $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
+        $branches    = $branchId ? Branch::where('id', $branchId)->get() : Branch::all();
         $departments = Department::all();
         $ministries  = Ministry::all();
         return view('announcements.create', compact('branches', 'departments', 'ministries'));
@@ -51,15 +58,25 @@ class AnnouncementController extends Controller
             $data['published_at'] = now();
         }
 
+        if (auth()->user()?->isPastor()) {
+            $data['audience'] = 'branch';
+            $data['branch_id'] = auth()->user()->pastoredBranchId();
+        }
+
         Announcement::create($data);
         return redirect()->route('announcements.index')->with('success', 'Announcement published.');
     }
 
     public function show(Announcement $announcement): View
     {
+        if (auth()->user()?->isPastor() && $announcement->audience !== 'all' && $announcement->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $announcement->load(['publishedBy', 'branch', 'department', 'ministry']);
         $sendLogs    = $announcement->sendLogs()->latest()->get();
-        $branches    = Branch::all();
+        $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
+        $branches    = $branchId ? Branch::where('id', $branchId)->get() : Branch::all();
         $departments = Department::all();
         $ministries  = Ministry::all();
         return view('announcements.show', compact('announcement', 'sendLogs', 'branches', 'departments', 'ministries'));
@@ -67,7 +84,12 @@ class AnnouncementController extends Controller
 
     public function edit(Announcement $announcement): View
     {
-        $branches    = Branch::all();
+        if (auth()->user()?->isPastor() && $announcement->audience !== 'all' && $announcement->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
+        $branchId = auth()->user()?->isPastor() ? auth()->user()->pastoredBranchId() : null;
+        $branches    = $branchId ? Branch::where('id', $branchId)->get() : Branch::all();
         $departments = Department::all();
         $ministries  = Ministry::all();
         return view('announcements.edit', compact('announcement', 'branches', 'departments', 'ministries'));
@@ -75,6 +97,10 @@ class AnnouncementController extends Controller
 
     public function update(Request $request, Announcement $announcement): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $announcement->audience !== 'all' && $announcement->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $data = $request->validate([
             'title'         => 'required|string|max:255',
             'body'          => 'required|string',
@@ -86,12 +112,21 @@ class AnnouncementController extends Controller
             'expires_at'    => 'nullable|date',
         ]);
 
+        if (auth()->user()?->isPastor()) {
+            $data['audience'] = 'branch';
+            $data['branch_id'] = auth()->user()->pastoredBranchId();
+        }
+
         $announcement->update($data);
         return redirect()->route('announcements.index')->with('success', 'Announcement updated.');
     }
 
     public function destroy(Announcement $announcement): RedirectResponse
     {
+        if (auth()->user()?->isPastor() && $announcement->audience !== 'all' && $announcement->branch_id !== auth()->user()->pastoredBranchId()) {
+            abort(403);
+        }
+
         $announcement->delete();
         return redirect()->route('announcements.index')->with('success', 'Announcement deleted.');
     }
