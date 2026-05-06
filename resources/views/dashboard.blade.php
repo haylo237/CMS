@@ -2,7 +2,9 @@
 @section('page-title', 'Dashboard')
 
 @section('content')
-@php($currency = \App\Models\Setting::currencySymbol())
+@php
+    $currency = \App\Models\Setting::currencySymbol();
+@endphp
 {{-- Stats Row --}}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     @php
