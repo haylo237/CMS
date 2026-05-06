@@ -17,12 +17,24 @@ docker compose up --build -d
 
 This starts:
 
-- `web` (Nginx) on `http://localhost:8080`
+- `web` (Nginx) on `http://localhost:8088` by default
 - `app` (PHP-FPM Laravel app)
 - `postgres` (PostgreSQL)
 - `redis` (Redis cache/queue)
 - `worker` (queue worker)
 - `scheduler` (Laravel scheduler loop)
+
+Host ports are configurable to avoid collisions:
+
+- `WEB_PORT` default: `8088`
+- `POSTGRES_PORT` default: `5433`
+- `REDIS_PORT` default: `6380`
+
+Example:
+
+```bash
+WEB_PORT=8095 POSTGRES_PORT=5540 REDIS_PORT=6395 docker compose up --build -d
+```
 
 ### 2) Seed initial data
 
@@ -37,7 +49,7 @@ Default admin credentials:
 
 ### 3) Access app
 
-Open `http://localhost:8080`.
+Open `http://localhost:8088` (or your custom `WEB_PORT`).
 
 ## Useful Docker Commands
 
