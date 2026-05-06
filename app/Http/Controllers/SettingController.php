@@ -16,8 +16,6 @@ class SettingController extends Controller
 
     public function index(): View
     {
-        $this->authorize('manage-settings');
-
         $groups    = ['general', 'branding', 'finance', 'notifications'];
         $settings  = Setting::all()->groupBy('group');
         $templates = DocumentTemplate::with('uploadedBy')->latest()->get()->groupBy('type');
@@ -29,7 +27,6 @@ class SettingController extends Controller
 
     public function updateGeneral(Request $request): RedirectResponse
     {
-        $this->authorize('manage-settings');
 
         $keys = [
             'church_name', 'church_address', 'church_city',
@@ -48,7 +45,6 @@ class SettingController extends Controller
 
     public function updateBranding(Request $request): RedirectResponse
     {
-        $this->authorize('manage-settings');
 
         $request->validate([
             'church_logo'     => 'nullable|image|max:2048',
@@ -77,7 +73,6 @@ class SettingController extends Controller
 
     public function updateFinance(Request $request): RedirectResponse
     {
-        $this->authorize('manage-settings');
 
         foreach (['fiscal_year_start', 'finance_approval'] as $key) {
             Setting::set($key, $request->input($key, '0'));
@@ -88,7 +83,6 @@ class SettingController extends Controller
 
     public function updateNotifications(Request $request): RedirectResponse
     {
-        $this->authorize('manage-settings');
 
         foreach (['notify_new_member', 'notify_new_report'] as $key) {
             Setting::set($key, $request->has($key) ? '1' : '0');
@@ -101,7 +95,6 @@ class SettingController extends Controller
 
     public function storeTemplate(Request $request): RedirectResponse
     {
-        $this->authorize('manage-settings');
 
         $request->validate([
             'name'        => 'required|string|max:255',
@@ -135,7 +128,6 @@ class SettingController extends Controller
 
     public function destroyTemplate(DocumentTemplate $template): RedirectResponse
     {
-        $this->authorize('manage-settings');
 
         if (Storage::disk('public')->exists($template->file_path)) {
             Storage::disk('public')->delete($template->file_path);
@@ -147,7 +139,6 @@ class SettingController extends Controller
 
     public function setDefaultTemplate(DocumentTemplate $template): RedirectResponse
     {
-        $this->authorize('manage-settings');
 
         DocumentTemplate::where('type', $template->type)->update(['is_default' => false]);
         $template->update(['is_default' => true]);

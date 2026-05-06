@@ -14,17 +14,30 @@ class Setting extends Model
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = Cache::rememberForever("setting:{$key}", fn() => static::where('key', $key)->first());
+        $value = Cache::rememberForever("setting:{$key}", function () use ($key) {
+            $setting = static::where('key', $key)->first();
+            if (!$setting) {
+                return '__missing__';
+            }
+            return $setting->value ?? '__null__';
+        });
 
-        if (!$setting) {
+        if ($value === '__missing__') {
             return $default;
         }
 
-        if ($setting->type === 'boolean') {
-            return (bool) $setting->value;
+        if ($value === '__null__') {
+            return $default;
         }
 
-        return $setting->value ?? $default;
+        // Re-fetch type for boolean cast (type is rarely needed, so skip caching it)
+        $type = Cache::rememberForever("setting_type:{$key}", fn() => static::where('key', $key)->value('type') ?? 'text');
+
+        if ($type === 'boolean') {
+            return (bool) $value;
+        }
+
+        return $value;
     }
 
     /**
@@ -34,6 +47,7 @@ class Setting extends Model
     {
         static::updateOrCreate(['key' => $key], ['value' => $value]);
         Cache::forget("setting:{$key}");
+        Cache::forget("setting_type:{$key}");
     }
 
     /**
