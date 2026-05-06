@@ -9,8 +9,26 @@
     </div>
 
     <div class="bg-white rounded-xl border shadow-sm p-6">
-        <form method="POST" action="{{ route('members.update', $member) }}" class="space-y-5">
+        <form method="POST" action="{{ route('members.update', $member) }}" enctype="multipart/form-data" class="space-y-5">
             @csrf @method('PUT')
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Profile Photo</label>
+                <div class="flex items-center gap-4">
+                    @if($member->profile_photo_url)
+                        <img src="{{ $member->profile_photo_url }}" alt="{{ $member->full_name }}" class="w-14 h-14 rounded-full object-cover border">
+                    @else
+                        <div class="w-14 h-14 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center border">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                    @endif
+                    <div class="flex-1">
+                        <input type="file" name="profile_photo" accept="image/png,image/jpeg,image/webp"
+                               class="w-full border rounded-lg px-3 py-2 text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 @error('profile_photo') border-red-400 @enderror">
+                        <p class="text-xs text-gray-500 mt-1">Upload a new image to replace current photo. Max 2MB.</p>
+                    </div>
+                </div>
+            </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>

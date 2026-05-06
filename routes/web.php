@@ -27,8 +27,6 @@ Route::middleware(['auth'])->group(function () {
 
     // Members
     Route::resource('members', MemberController::class);
-    Route::post('members/{member}/ministries', [MemberController::class, 'assignMinistry'])->name('members.ministries.assign');
-    Route::delete('members/{member}/ministries', [MemberController::class, 'removeMinistry'])->name('members.ministries.remove');
     Route::post('members/{member}/leadership', [MemberController::class, 'assignLeadership'])->name('members.leadership.assign');
     Route::delete('members/{member}/leadership', [MemberController::class, 'removeLeadership'])->name('members.leadership.remove');
 
@@ -39,6 +37,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Ministries
     Route::resource('ministries', MinistryController::class);
+    Route::post('ministries/{ministry}/members', [MinistryController::class, 'assignMember'])->name('ministries.members.assign');
+    Route::delete('ministries/{ministry}/members', [MinistryController::class, 'removeMember'])->name('ministries.members.remove');
 
     // Leadership
     Route::resource('leadership', LeadershipController::class);

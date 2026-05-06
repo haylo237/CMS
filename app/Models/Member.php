@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Support\PhoneNumber;
+use Illuminate\Support\Facades\Storage;
 
 class Member extends Model
 {
@@ -45,6 +46,11 @@ class Member extends Model
     public function getDisplayPhoneAttribute(): ?string
     {
         return PhoneNumber::display($this->phone, $this->countryCode?->dial_code);
+    }
+
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        return $this->profile_photo ? Storage::url($this->profile_photo) : null;
     }
 
     public function user(): HasOne

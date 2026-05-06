@@ -11,8 +11,15 @@
     </div>
 
     <div class="bg-white rounded-xl border shadow-sm p-6">
-        <form method="POST" action="{{ route('members.store') }}" class="space-y-5">
+        <form method="POST" action="{{ route('members.store') }}" enctype="multipart/form-data" class="space-y-5">
             @csrf
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Profile Photo</label>
+                <input type="file" name="profile_photo" accept="image/png,image/jpeg,image/webp"
+                       class="w-full border rounded-lg px-3 py-2 text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 @error('profile_photo') border-red-400 @enderror">
+                <p class="text-xs text-gray-500 mt-1">JPG, PNG or WEBP. Max 2MB.</p>
+            </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>

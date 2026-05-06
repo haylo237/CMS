@@ -18,6 +18,15 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     {{-- Profile Info --}}
     <div class="bg-white rounded-xl border shadow-sm p-6">
+        <div class="mb-4 flex justify-center">
+            @if($member->profile_photo_url)
+                <img src="{{ $member->profile_photo_url }}" alt="{{ $member->full_name }}" class="w-24 h-24 rounded-full object-cover border-2 border-indigo-100">
+            @else
+                <div class="w-24 h-24 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center border-2 border-gray-200 text-2xl">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            @endif
+        </div>
         <h3 class="text-sm font-semibold text-gray-500 uppercase mb-4">Personal Info</h3>
         <dl class="space-y-3 text-sm">
             <div><dt class="text-gray-400">Full Name</dt><dd class="font-medium">{{ $member->full_name }}</dd></div>
@@ -61,13 +70,6 @@
                     @foreach($member->ministries as $min)
                         <div class="flex items-center gap-1 bg-purple-50 text-purple-700 text-sm px-3 py-1 rounded-full border border-purple-100">
                             {{ $min->name }} <span class="text-purple-400 text-xs">({{ $min->pivot->role }})</span>
-                            @can('manage-members')
-                                <form method="POST" action="{{ route('members.ministries.remove', $member) }}" class="inline">
-                                    @csrf @method('DELETE')
-                                    <input type="hidden" name="ministry_id" value="{{ $min->id }}">
-                                    <button type="submit" class="ml-1 text-purple-400 hover:text-red-500">&times;</button>
-                                </form>
-                            @endcan
                         </div>
                     @endforeach
                 </div>
@@ -75,23 +77,7 @@
                 <p class="text-sm text-gray-400 mb-4">Not assigned to any ministry.</p>
             @endif
 
-            @can('manage-members')
-                <form method="POST" action="{{ route('members.ministries.assign', $member) }}" class="flex gap-2 flex-wrap">
-                    @csrf
-                    <select name="ministry_id" required class="border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
-                        <option value="">Select ministry</option>
-                        @foreach($ministries as $min)
-                            <option value="{{ $min->id }}">{{ $min->name }}</option>
-                        @endforeach
-                    </select>
-                    <select name="role" class="border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
-                        <option value="member">Member</option>
-                        <option value="assistant">Assistant</option>
-                        <option value="leader">Leader</option>
-                    </select>
-                    <button type="submit" class="bg-purple-600 text-white text-sm px-3 py-1.5 rounded-lg hover:bg-purple-700 transition">Assign</button>
-                </form>
-            @endcan
+            <p class="text-xs text-gray-500">Ministry leaders and membership are managed from each ministry view page.</p>
         </div>
 
         {{-- Leadership Roles --}}

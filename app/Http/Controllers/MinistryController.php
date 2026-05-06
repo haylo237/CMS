@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ministry;
+use App\Models\Member;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -37,8 +38,9 @@ class MinistryController extends Controller
     public function show(Ministry $ministry): View
     {
         $ministry->load(['members', 'reports' => fn($q) => $q->latest()->limit(5)]);
+        $members = Member::orderBy('first_name')->orderBy('last_name')->get();
 
-        return view('ministries.show', compact('ministry'));
+        return view('ministries.show', compact('ministry', 'members'));
     }
 
     public function edit(Ministry $ministry): View
@@ -65,5 +67,30 @@ class MinistryController extends Controller
 
         return redirect()->route('ministries.index')
                          ->with('success', 'Ministry deleted.');
+    }
+
+    public function assignMember(Request $request, Ministry $ministry): RedirectResponse
+    {
+        $validated = $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'role' => 'required|in:leader,assistant,member',
+        ]);
+
+        $ministry->members()->syncWithoutDetaching([
+            $validated['member_id'] => ['role' => $validated['role']],
+        ]);
+
+        return back()->with('success', 'Ministry member updated.');
+    }
+
+    public function removeMember(Request $request, Ministry $ministry): RedirectResponse
+    {
+        $validated = $request->validate([
+            'member_id' => 'required|exists:members,id',
+        ]);
+
+        $ministry->members()->detach($validated['member_id']);
+
+        return back()->with('success', 'Ministry member removed.');
     }
 }

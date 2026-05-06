@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\CountryCode;
 use App\Models\Member;
-use App\Models\Ministry;
 use App\Models\LeadershipRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class MemberController extends Controller
@@ -66,11 +66,16 @@ class MemberController extends Controller
             'gender'        => 'nullable|in:male,female,other',
             'date_of_birth' => 'nullable|date|before:today',
             'status'        => 'required|in:active,inactive,deceased,transferred',
+            'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'address'       => 'nullable|string',
         ]);
 
         if (auth()->user()?->isPastor()) {
             $validated['branch_id'] = auth()->user()->pastoredBranchId();
+        }
+
+        if ($request->hasFile('profile_photo')) {
+            $validated['profile_photo'] = $request->file('profile_photo')->store('member-photos', 'public');
         }
 
         $member = Member::create($validated);
@@ -87,10 +92,9 @@ class MemberController extends Controller
 
         $member->load(['countryCode', 'departments', 'ministries', 'leadershipRoles', 'user']);
 
-        $ministries       = Ministry::orderBy('name')->get();
         $leadershipRoles  = LeadershipRole::orderBy('rank')->get();
 
-        return view('members.show', compact('member', 'ministries', 'leadershipRoles'));
+        return view('members.show', compact('member', 'leadershipRoles'));
     }
 
     public function edit(Member $member): View
@@ -121,11 +125,20 @@ class MemberController extends Controller
             'gender'        => 'nullable|in:male,female,other',
             'date_of_birth' => 'nullable|date|before:today',
             'status'        => 'required|in:active,inactive,deceased,transferred',
+            'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'address'       => 'nullable|string',
         ]);
 
         if (auth()->user()?->isPastor()) {
             $validated['branch_id'] = auth()->user()->pastoredBranchId();
+        }
+
+        if ($request->hasFile('profile_photo')) {
+            if ($member->profile_photo) {
+                Storage::disk('public')->delete($member->profile_photo);
+            }
+
+            $validated['profile_photo'] = $request->file('profile_photo')->store('member-photos', 'public');
         }
 
         $member->update($validated);
@@ -140,32 +153,14 @@ class MemberController extends Controller
             abort(403);
         }
 
+        if ($member->profile_photo) {
+            Storage::disk('public')->delete($member->profile_photo);
+        }
+
         $member->delete();
 
         return redirect()->route('members.index')
                          ->with('success', 'Member removed successfully.');
-    }
-
-    public function assignMinistry(Request $request, Member $member): RedirectResponse
-    {
-        $request->validate([
-            'ministry_id' => 'required|exists:ministries,id',
-            'role'        => 'required|in:leader,assistant,member',
-        ]);
-
-        $member->ministries()->syncWithoutDetaching([
-            $request->ministry_id => ['role' => $request->role],
-        ]);
-
-        return back()->with('success', 'Ministry assigned.');
-    }
-
-    public function removeMinistry(Request $request, Member $member): RedirectResponse
-    {
-        $request->validate(['ministry_id' => 'required|exists:ministries,id']);
-        $member->ministries()->detach($request->ministry_id);
-
-        return back()->with('success', 'Ministry removed.');
     }
 
     public function assignLeadership(Request $request, Member $member): RedirectResponse

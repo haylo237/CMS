@@ -58,8 +58,15 @@
             @forelse($members as $member)
                 <tr class="hover:bg-gray-50">
                     <td class="px-5 py-3 font-medium">
-                        <a href="{{ route('members.show', $member) }}" class="text-indigo-600 hover:underline">
-                            {{ $member->full_name }}
+                        <a href="{{ route('members.show', $member) }}" class="text-indigo-600 hover:underline inline-flex items-center gap-2">
+                            @if($member->profile_photo_url)
+                                <img src="{{ $member->profile_photo_url }}" alt="{{ $member->full_name }}" class="w-8 h-8 rounded-full object-cover border">
+                            @else
+                                <span class="w-8 h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center border text-xs">
+                                    <i class="fa-solid fa-user"></i>
+                                </span>
+                            @endif
+                            <span>{{ $member->full_name }}</span>
                         </a>
                     </td>
                     <td class="px-5 py-3 text-gray-500">{{ $member->email ?? '—' }}</td>
