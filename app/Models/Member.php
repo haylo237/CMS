@@ -22,6 +22,7 @@ class Member extends Model
         'status',
         'profile_photo',
         'address',
+        'branch_id',
     ];
 
     protected $casts = [
@@ -72,5 +73,25 @@ class Member extends Model
     public function financeTransactions(): HasMany
     {
         return $this->hasMany(FinanceTransaction::class, 'recorded_by');
+    }
+
+    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function receivedMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'recipient_id');
     }
 }

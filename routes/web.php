@@ -1,10 +1,14 @@
 <?php
 
+use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\LeadershipController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MinistryController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
@@ -47,6 +51,19 @@ Route::middleware(['auth'])->group(function () {
 
     // Finance
     Route::resource('finance', FinanceController::class);
+
+    // Branches
+    Route::resource('branches', BranchController::class);
+
+    // Events & Attendance
+    Route::resource('events', EventController::class);
+    Route::post('events/{event}/attendance', [EventController::class, 'markAttendance'])->name('events.attendance.save');
+
+    // Announcements
+    Route::resource('announcements', AnnouncementController::class);
+
+    // Messages
+    Route::resource('messages', MessageController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
 
     // Users (admin only)
     Route::middleware(['can:manage-users'])->group(function () {

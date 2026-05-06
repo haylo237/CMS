@@ -20,13 +20,16 @@
         <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             @php
                 $navItems = [
-                    ['route' => 'dashboard',    'icon' => 'fa-gauge',         'label' => 'Dashboard'],
-                    ['route' => 'members.index','icon' => 'fa-users',         'label' => 'Members'],
-                    ['route' => 'departments.index','icon' => 'fa-building',  'label' => 'Departments'],
-                    ['route' => 'ministries.index','icon' => 'fa-hands-praying','label' => 'Ministries'],
-                    ['route' => 'leadership.index','icon' => 'fa-crown',      'label' => 'Leadership'],
-                    ['route' => 'reports.index', 'icon' => 'fa-chart-bar',    'label' => 'Reports'],
-                    ['route' => 'finance.index', 'icon' => 'fa-coins',        'label' => 'Finance'],
+                    ['route' => 'dashboard',              'icon' => 'fa-gauge',             'label' => 'Dashboard'],
+                    ['route' => 'members.index',           'icon' => 'fa-users',             'label' => 'Members'],
+                    ['route' => 'branches.index',          'icon' => 'fa-code-branch',       'label' => 'Branches'],
+                    ['route' => 'departments.index',       'icon' => 'fa-building',          'label' => 'Departments'],
+                    ['route' => 'ministries.index',        'icon' => 'fa-hands-praying',     'label' => 'Ministries'],
+                    ['route' => 'leadership.index',        'icon' => 'fa-crown',             'label' => 'Leadership'],
+                    ['route' => 'events.index',            'icon' => 'fa-calendar-days',     'label' => 'Events'],
+                    ['route' => 'announcements.index',     'icon' => 'fa-bullhorn',          'label' => 'Announcements'],
+                    ['route' => 'reports.index',           'icon' => 'fa-chart-bar',         'label' => 'Reports'],
+                    ['route' => 'finance.index',           'icon' => 'fa-coins',             'label' => 'Finance'],
                 ];
             @endphp
 
@@ -47,6 +50,22 @@
                     Users
                 </a>
             @endcan
+
+            @auth
+                @php
+                    $msgMemberId    = auth()->user()->member_id;
+                    $unreadMessages = $msgMemberId ? \App\Models\Message::where('recipient_id', $msgMemberId)->whereNull('read_at')->count() : 0;
+                @endphp
+                <a href="{{ route('messages.index') }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition
+                          {{ request()->routeIs('messages*') ? 'bg-indigo-700 text-white' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white' }}">
+                    <i class="fa-solid fa-envelope w-5 text-center"></i>
+                    Messages
+                    @if($unreadMessages > 0)
+                        <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">{{ $unreadMessages }}</span>
+                    @endif
+                </a>
+            @endauth
         </nav>
 
         <div class="px-4 py-4 border-t border-indigo-700">
